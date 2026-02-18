@@ -1,0 +1,8 @@
+
+{
+  "name": "Brayan Brush - Corporación Logística",
+  "description": "Líderes en transporte terrestre y soluciones logísticas en todo el Perú. Rapidez, seguridad y confianza en cada ruta nacional.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
