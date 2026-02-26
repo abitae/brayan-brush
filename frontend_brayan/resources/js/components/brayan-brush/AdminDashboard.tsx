@@ -1,5 +1,16 @@
 import { useState, useEffect } from 'react';
-import { router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
+import {
+  Ban,
+  Bot,
+  FileText,
+  LogOut,
+  Palette,
+  Receipt,
+  Route,
+  Wrench,
+} from 'lucide-react';
+import { logout } from '@/routes';
 import {
   createPricingRoute,
   createProhibitedCategory,
@@ -334,28 +345,101 @@ export default function AdminDashboard({
     <div className="min-h-screen bg-slate-100 text-slate-900 p-6 md:p-12 pt-28">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row gap-12">
-          <aside className="md:w-64 space-y-2">
-            <h2 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-6">Administración Web</h2>
-            {[
-              { id: 'branding', label: '🎨 Branding & Media' },
-              { id: 'servicios', label: '🛠️ Servicios' },
-              { id: 'precios', label: '📐 Precios por ruta' },
-              { id: 'prohibiciones', label: '🚫 Prohibiciones' },
-              { id: 'cotizador', label: '📋 Cotizador' },
-              { id: 'cotizaciones', label: '💰 Solicitudes de cotización' },
-              { id: 'gemini', label: '🤖 Asistente IA' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`w-full text-left px-4 py-3 rounded-xl font-bold transition-all ${
-                  activeTab === tab.id ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-600 hover:bg-slate-200'
-                }`}
+          <aside className="md:w-72 shrink-0 flex flex-col rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden h-fit">
+            <div className="p-5 border-b border-slate-100 bg-slate-50/80">
+              <h2 className="text-[11px] font-black text-slate-500 uppercase tracking-widest">
+                Administración Web
+              </h2>
+            </div>
+            <nav className="p-3 flex flex-col gap-1 overflow-y-auto">
+              <span className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Contenido
+              </span>
+              {[
+                { id: 'branding', label: 'Branding & Media', Icon: Palette },
+                { id: 'servicios', label: 'Servicios', Icon: Wrench },
+              ].map((tab) => {
+                const Icon = tab.Icon;
+                const active = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                      active
+                        ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
+                        : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5 shrink-0 opacity-90" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+              <span className="px-3 py-2 mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Comercial
+              </span>
+              {[
+                { id: 'precios', label: 'Precios por ruta', Icon: Route },
+                { id: 'cotizador', label: 'Cotizador', Icon: FileText },
+                { id: 'cotizaciones', label: 'Solicitudes de cotización', Icon: Receipt },
+              ].map((tab) => {
+                const Icon = tab.Icon;
+                const active = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                      active
+                        ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
+                        : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5 shrink-0 opacity-90" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+              <span className="px-3 py-2 mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Configuración
+              </span>
+              {[
+                { id: 'prohibiciones', label: 'Prohibiciones', Icon: Ban },
+                { id: 'gemini', label: 'Asistente IA', Icon: Bot },
+              ].map((tab) => {
+                const Icon = tab.Icon;
+                const active = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                      active
+                        ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
+                        : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5 shrink-0 opacity-90" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </nav>
+            <div className="p-3 mt-auto border-t border-slate-100 bg-slate-50/50">
+              <Link
+                href={logout().url}
+                method="post"
+                as="button"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-700 transition-all"
               >
-                {tab.label}
-              </button>
-            ))}
+                <LogOut className="w-5 h-5 shrink-0" />
+                Cerrar sesión
+              </Link>
+            </div>
           </aside>
 
           <main className="flex-grow bg-white border border-slate-200 rounded-[40px] p-8 md:p-12 shadow-sm">

@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
 import { ICONS } from '@/constants/brayan';
 import SmartAssistant from '@/components/brayan-brush/SmartAssistant';
+import { logout } from '@/routes';
 
 interface SiteConfigShared {
   company_name: string;
@@ -90,12 +91,22 @@ export default function BrayanBrushLayout({ children }: PropsWithChildren) {
                 Cotizar
               </Link>
               {isAuth ? (
-                <Link
-                  href="/admin"
-                  className="px-5 py-2.5 rounded-full font-black text-sm bg-emerald-600 text-white hover:bg-emerald-500"
-                >
-                  Panel Admin
-                </Link>
+                <>
+                  <Link
+                    href="/admin"
+                    className="px-5 py-2.5 rounded-full font-black text-sm bg-emerald-600 text-white hover:bg-emerald-500"
+                  >
+                    Panel Admin
+                  </Link>
+                  <Link
+                    href={logout().url}
+                    method="post"
+                    as="button"
+                    className="px-5 py-2.5 rounded-full font-black text-sm border-2 border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors"
+                  >
+                    Cerrar sesión
+                  </Link>
+                </>
               ) : (
                 <Link
                   href="/login"
@@ -180,6 +191,16 @@ export default function BrayanBrushLayout({ children }: PropsWithChildren) {
             >
               Panel Administrativo
             </Link>
+            {isAuth && (
+              <Link
+                href={logout().url}
+                method="post"
+                as="button"
+                className="block w-full mt-3 py-3 rounded-2xl border-2 border-slate-300 text-slate-600 hover:border-slate-400 hover:bg-slate-100 text-xs font-black uppercase tracking-widest text-center transition-colors"
+              >
+                Cerrar sesión
+              </Link>
+            )}
             <p className="text-[10px] text-slate-500 mt-4 text-center font-bold">Brayan Brush - Laravel</p>
           </div>
         </div>
