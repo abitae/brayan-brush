@@ -84,6 +84,7 @@ export interface SiteConfig {
   calculator_default_length?: number;
   calculator_default_width?: number;
   calculator_default_height?: number;
+  recaptcha_site_key?: string | null;
 }
 
 export interface TrackingResult {
@@ -96,11 +97,39 @@ export interface TrackingResult {
   estimated_delivery: string | null;
   progress: number;
   history: { date: string; location: string; desc: string }[];
+  is_home?: boolean;
+  delivery_address?: string | null;
 }
 
-export async function getTracking(code: string): Promise<TrackingResult> {
-  const params = new URLSearchParams({ code: code.trim() });
-  return fetchApi<TrackingResult>(`/api/tracking?${params.toString()}`);
+const TRACKING_404_MESSAGE = 'Encomienda no encontrada.';
+const TRACKING_5XX_MESSAGE = 'Error al consultar el seguimiento. Intenta de nuevo.';
+
+export async function getTracking(code: string, captchaToken: string): Promise<TrackingResult> {
+  const url = `${API_BASE}/api/tracking`;
+  const csrf = getCsrfToken();
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+  };
+  if (csrf) headers['X-XSRF-TOKEN'] = csrf;
+  const res = await fetch(url, {
+    method: 'POST',
+    credentials: 'include',
+    headers,
+    body: JSON.stringify({ code: code.trim(), captcha_token: captchaToken }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    const msg = (err as { message?: string }).message;
+    if (res.status === 404) {
+      throw new Error(TRACKING_404_MESSAGE);
+    }
+    if (res.status >= 500) {
+      throw new Error(msg && msg.length < 200 ? msg : TRACKING_5XX_MESSAGE);
+    }
+    throw new Error(msg || res.statusText);
+  }
+  return res.json();
 }
 
 export async function getConfig(): Promise<SiteConfig> {

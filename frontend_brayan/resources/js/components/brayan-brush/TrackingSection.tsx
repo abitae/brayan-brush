@@ -1,7 +1,21 @@
-import { useState } from 'react';
-import { getTracking } from '@/api/brayan-api';
+import { useEffect, useState } from 'react';
+import { getConfig, getTracking } from '@/api/brayan-api';
 import type { TrackingResult } from '@/api/brayan-api';
 import { ICONS } from '@/constants/brayan';
+
+/** reCAPTCHA v3 (invisible): execute(siteKey, { action }) devuelve un token. */
+declare global {
+  interface Window {
+    grecaptcha?: {
+      ready: (cb: () => void) => void;
+      execute: (siteKey: string, options: { action: string }) => Promise<string>;
+    };
+  }
+}
+
+const RECAPTCHA_SCRIPT_ID = 'recaptcha-api-script';
+const RECAPTCHA_ACTION = 'tracking';
+const CAPTCHA_REQUIRED_MSG = 'Completa la verificación de seguridad.';
 
 function normalizeTrackingResult(data: unknown): TrackingResult {
   const d = data as Record<string, unknown>;
@@ -22,6 +36,8 @@ function normalizeTrackingResult(data: unknown): TrackingResult {
     estimated_delivery: d?.estimated_delivery != null ? String(d.estimated_delivery) : null,
     progress: typeof d?.progress === 'number' ? d.progress : 0,
     history,
+    is_home: typeof d?.is_home === 'boolean' ? d.is_home : false,
+    delivery_address: d?.delivery_address != null ? String(d.delivery_address) : null,
   };
 }
 
@@ -47,15 +63,57 @@ export default function TrackingSection() {
   const [result, setResult] = useState<TrackingResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [recaptchaSiteKey, setRecaptchaSiteKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    getConfig().then((c) => {
+      const key = c.recaptcha_site_key ?? null;
+      setRecaptchaSiteKey(key && key.length > 0 ? key : null);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!recaptchaSiteKey) return;
+    if (document.getElementById(RECAPTCHA_SCRIPT_ID)) return;
+    const script = document.createElement('script');
+    script.id = RECAPTCHA_SCRIPT_ID;
+    script.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(recaptchaSiteKey)}`;
+    script.async = true;
+    document.head.appendChild(script);
+  }, [recaptchaSiteKey]);
 
   const handleTrack = async () => {
     const code = trackingCode.trim();
     if (!code) return;
     setError(null);
     setResult(null);
+
+    let token = '';
+    if (recaptchaSiteKey && typeof window !== 'undefined' && window.grecaptcha) {
+      try {
+        token = await new Promise<string>((resolve, reject) => {
+          window.grecaptcha!.ready(async () => {
+            try {
+              const t = await window.grecaptcha!.execute(recaptchaSiteKey!, { action: RECAPTCHA_ACTION });
+              resolve(t);
+            } catch (e) {
+              reject(e);
+            }
+          });
+        });
+      } catch {
+        setError(CAPTCHA_REQUIRED_MSG);
+        return;
+      }
+      if (!token) {
+        setError(CAPTCHA_REQUIRED_MSG);
+        return;
+      }
+    }
+
     setIsLoading(true);
     try {
-      const data = await getTracking(code);
+      const data = await getTracking(code, token);
       setResult(normalizeTrackingResult(data));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo consultar el seguimiento.');
@@ -155,8 +213,15 @@ export default function TrackingSection() {
                       <MapPinIcon />
                     </div>
                     <p className="text-xs font-black text-slate-400 uppercase tracking-tighter">
-                      {result.destination}
+                      {result.is_home && result.delivery_address
+                        ? 'Entrega a domicilio'
+                        : result.destination}
                     </p>
+                    {result.is_home && result.delivery_address && (
+                      <p className="text-[10px] text-slate-500 mt-1 max-w-[140px] mx-auto leading-tight">
+                        {result.delivery_address}
+                      </p>
+                    )}
                   </div>
                 </div>
 

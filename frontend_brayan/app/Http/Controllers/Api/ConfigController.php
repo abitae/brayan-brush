@@ -17,7 +17,7 @@ class ConfigController extends Controller
     {
         $config = SiteConfig::default();
 
-        return response()->json([
+        $payload = [
             'company_name' => $config->company_name,
             'logo_text' => $config->logo_text,
             'hero_title' => $config->hero_title,
@@ -26,7 +26,13 @@ class ConfigController extends Controller
             'logo_url' => $config->logo_url,
             'banner_url' => $config->banner_url,
             'banner_bg_url' => $config->banner_bg_url,
-        ]);
+        ];
+        $siteKey = config('services.recaptcha.site_key');
+        if (! empty($siteKey)) {
+            $payload['recaptcha_site_key'] = $siteKey;
+        }
+
+        return response()->json($payload);
     }
 
     /**

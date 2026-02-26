@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Exceptions\TrackingNotFoundException;
+use App\Exceptions\TrackingServerException;
 use App\Models\SiteConfig;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -59,7 +61,14 @@ class TrackingService
             $response = Http::timeout(10)->get($url);
 
             if (! $response->successful()) {
-                Log::warning('Tracking API error', ['url' => $url, 'status' => $response->status()]);
+                $status = $response->status();
+                Log::warning('Tracking API error', ['url' => $url, 'status' => $status]);
+                if ($status === 404) {
+                    throw new TrackingNotFoundException('Encomienda no encontrada.');
+                }
+                if ($status >= 500) {
+                    throw new TrackingServerException('Error al consultar el seguimiento. Intenta de nuevo.');
+                }
 
                 return null;
             }
@@ -70,6 +79,8 @@ class TrackingService
             }
 
             return $this->normalizeExternalResponse($code, $data);
+        } catch (TrackingNotFoundException|TrackingServerException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             Log::warning('Tracking API exception', ['url' => $url, 'message' => $e->getMessage()]);
 
@@ -113,23 +124,37 @@ class TrackingService
     }
 
     /**
-     * Normaliza respuesta de system_brayan: estado_encomienda, lugar_origen, lugar_destino, fecha_*.
+     * Normaliza respuesta de system_brayan: estado_encomienda, name_origen, name_destino, lugar_origen, lugar_destino, direccion_envio, isHome, fecha_*.
      */
     private function normalizeSystemBrayanResponse(array $data, string $code): array
     {
         $status = $this->normalizeStatus($data['estado_encomienda'] ?? self::STATUS_REGISTRADO);
-        $origin = $data['lugar_origen'] ?? '';
-        $destination = $data['lugar_destino'] ?? '';
-        $history = $this->buildHistoryFromFechas($data);
+        $nameOrigen = $data['name_origen'] ?? '';
+        $nameDestino = $data['name_destino'] ?? '';
+        $lugarOrigen = $data['lugar_origen'] ?? '';
+        $lugarDestino = $data['lugar_destino'] ?? '';
+        $direccionEnvio = $data['direccion_envio'] ?? null;
+        $isHome = ! empty($data['isHome']);
+
+        $origin = $this->formatOriginDestination($nameOrigen, $lugarOrigen);
+        if ($isHome) {
+            $destination = 'Entrega a domicilio';
+            $deliveryAddress = $direccionEnvio ? (string) $direccionEnvio : null;
+        } else {
+            $destination = $this->formatOriginDestination($nameDestino, $lugarDestino);
+            $deliveryAddress = null;
+        }
 
         $currentLocation = match ($status) {
             self::STATUS_REGISTRADO => $origin,
             self::STATUS_ENVIADO => 'En tránsito',
-            self::STATUS_RECIBIDO => $destination,
+            self::STATUS_RECIBIDO => $isHome ? ($direccionEnvio ?: $destination) : $this->formatOriginDestination($nameDestino, $lugarDestino),
             self::STATUS_RETORNADO => 'En retorno',
-            self::STATUS_ENTREGADO => ! empty($data['direccion_envio']) ? $data['direccion_envio'] : $destination,
+            self::STATUS_ENTREGADO => $isHome && $direccionEnvio ? (string) $direccionEnvio : $this->formatOriginDestination($nameDestino, $lugarDestino),
             default => $origin,
         };
+
+        $history = $this->buildHistoryFromFechas($data);
 
         return [
             'code' => $data['code'] ?? $code,
@@ -141,7 +166,22 @@ class TrackingService
             'estimated_delivery' => null,
             'progress' => $this->progressFromStatus($status),
             'history' => $history,
+            'is_home' => $isHome,
+            'delivery_address' => $deliveryAddress,
         ];
+    }
+
+    private function formatOriginDestination(string $name, string $address): string
+    {
+        $name = trim($name);
+        $address = trim($address);
+        if ($name !== '' && $address !== '') {
+            return $name.' – '.$address;
+        }
+        if ($address !== '') {
+            return $address;
+        }
+        return $name ?: '—';
     }
 
     private function buildHistoryFromFechas(array $data): array
@@ -157,17 +197,21 @@ class TrackingService
             return (string) $value;
         };
 
+        $locOrigen = $this->formatOriginDestination($data['name_origen'] ?? '', $data['lugar_origen'] ?? '') ?: 'Origen';
+        $locDestino = $this->formatOriginDestination($data['name_destino'] ?? '', $data['lugar_destino'] ?? '') ?: 'Destino';
+        $locEntrega = ! empty($data['direccion_envio']) ? $data['direccion_envio'] : $locDestino;
+
         if (! empty($data['fecha_creacion'])) {
-            $history[] = ['date' => $formatDate($data['fecha_creacion']), 'location' => $data['lugar_origen'] ?? 'Origen', 'desc' => 'Envío registrado'];
+            $history[] = ['date' => $formatDate($data['fecha_creacion']), 'location' => $locOrigen, 'desc' => 'Envío registrado'];
         }
         if (! empty($data['fecha_envio'])) {
             $history[] = ['date' => $formatDate($data['fecha_envio']), 'location' => 'En tránsito', 'desc' => 'Enviado'];
         }
         if (! empty($data['fecha_recepcion'])) {
-            $history[] = ['date' => $formatDate($data['fecha_recepcion']), 'location' => $data['lugar_destino'] ?? 'Destino', 'desc' => 'Recibido en sucursal destino'];
+            $history[] = ['date' => $formatDate($data['fecha_recepcion']), 'location' => $locDestino, 'desc' => 'Recibido en sucursal destino'];
         }
         if (! empty($data['fecha_entrega'])) {
-            $history[] = ['date' => $formatDate($data['fecha_entrega']), 'location' => $data['direccion_envio'] ?? $data['lugar_destino'] ?? 'Destino', 'desc' => 'Entregado'];
+            $history[] = ['date' => $formatDate($data['fecha_entrega']), 'location' => $locEntrega, 'desc' => 'Entregado'];
         }
         if (! empty($data['fecha_retorno'])) {
             $history[] = ['date' => $formatDate($data['fecha_retorno']), 'location' => 'Retorno', 'desc' => 'Encomienda retornada'];

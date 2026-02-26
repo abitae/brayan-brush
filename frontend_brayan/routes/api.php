@@ -15,6 +15,7 @@ Route::get('/services', [ServiceController::class, 'index']);
 Route::get('/prohibited-categories', [ProhibitedCategoryController::class, 'index']);
 Route::get('/pricing-routes', [PricingRouteController::class, 'index']);
 Route::get('/tracking', [TrackingController::class, 'show']);
+Route::post('/tracking', [TrackingController::class, 'store']);
 
 Route::post('/assistant/chat', [AssistantController::class, 'chat']);
 Route::post('/quotes', [QuoteController::class, 'store']);
