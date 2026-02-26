@@ -29,11 +29,13 @@ function getStatusBadgeClass(status: string): string {
   switch (status) {
     case 'registrado':
       return 'bg-slate-500/20 text-slate-300 border-slate-500/50';
-    case 'en_camino':
+    case 'enviado':
       return 'bg-amber-500/20 text-amber-300 border-amber-500/50';
-    case 'en_almacen':
+    case 'recibido':
       return 'bg-blue-500/20 text-blue-300 border-blue-500/50';
-    case 'recogido':
+    case 'retornado':
+      return 'bg-orange-500/20 text-orange-300 border-orange-500/50';
+    case 'entregado':
       return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50';
     default:
       return 'bg-slate-500/20 text-slate-300 border-slate-500/50';
@@ -74,7 +76,7 @@ export default function TrackingSection() {
             Rastreo por <span className="text-emerald-600 font-black">código</span>
           </h2>
           <p className="text-slate-500 text-lg">
-            Consulta el estado de tu envío: Registrado, En camino, En almacén o Recogido.
+            Consulta el estado de tu envío: Registrado, Enviado, Recibido, Retornado o Entregado.
           </p>
         </div>
 
@@ -89,7 +91,7 @@ export default function TrackingSection() {
                 value={trackingCode}
                 onChange={(e) => setTrackingCode(e.target.value.toUpperCase())}
                 onKeyDown={(e) => e.key === 'Enter' && handleTrack()}
-                placeholder="Código de guía (ej: BB-2024-XXXX)"
+                placeholder="Código de guía (ej: ENC-000001-1770945006-0-7900)"
                 className="w-full pl-16 pr-6 py-6 bg-white border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-3xl outline-none shadow-sm font-bold tracking-wide transition-all text-lg"
               />
             </div>
@@ -107,8 +109,7 @@ export default function TrackingSection() {
             </button>
           </div>
           <p className="text-xs text-slate-500 mt-4 text-center md:text-left">
-            Para pruebas puedes usar: cualquier código (ej. BB-2024-DEMO), o terminar en -0 (Registrado), -A (En
-            almacén), -R (Recogido).
+            Ingresa el código de tu encomienda (ej. ENC-000001-1770945006-0-7900) para ver el estado del envío.
           </p>
         </div>
 
@@ -165,7 +166,7 @@ export default function TrackingSection() {
                       Ubicación actual
                     </p>
                     <p className="font-bold text-slate-800 flex items-center gap-2">
-                      {result.status !== 'recogido' && (
+                      {result.status !== 'entregado' && result.status !== 'retornado' && (
                         <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
                       )}
                       {result.current_location ?? '—'}
@@ -183,7 +184,7 @@ export default function TrackingSection() {
 
             <div className="lg:col-span-4 bg-slate-50 rounded-[40px] p-10 border border-slate-100">
               <h4 className="font-black text-slate-900 uppercase tracking-widest text-xs mb-10 pb-4 border-b border-slate-200">
-                Estados: Registrado → En camino → En almacén → Recogido
+                Estados: Registrado → Enviado → Recibido → Entregado (o Retornado)
               </h4>
               <div className="space-y-10">
                 {!(result.history?.length) ? (

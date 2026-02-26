@@ -463,7 +463,7 @@ export default function AdminDashboard({
                       type="url"
                       value={localConfig.tracking_api_url ?? ''}
                       onChange={(e) => setLocalConfig({ ...localConfig, tracking_api_url: e.target.value || null })}
-                      placeholder="https://api.ejemplo.com/rastreo"
+                      placeholder="https://system_brayan.test/api/frontend/tracking"
                       className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-emerald-500 outline-none"
                     />
                     <p className="text-[10px] text-slate-500 mt-1">

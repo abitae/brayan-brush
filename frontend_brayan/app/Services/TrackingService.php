@@ -8,14 +8,16 @@ use Illuminate\Support\Facades\Log;
 
 class TrackingService
 {
-    /** Estados posibles del seguimiento */
+    /** Estados posibles del seguimiento (system_brayan: REGISTRADO, ENVIADO, RECIBIDO, RETORNADO, ENTREGADO) */
     public const STATUS_REGISTRADO = 'registrado';
 
-    public const STATUS_EN_CAMINO = 'en_camino';
+    public const STATUS_ENVIADO = 'enviado';
 
-    public const STATUS_EN_ALMACEN = 'en_almacen';
+    public const STATUS_RECIBIDO = 'recibido';
 
-    public const STATUS_RECOGIDO = 'recogido';
+    public const STATUS_RETORNADO = 'retornado';
+
+    public const STATUS_ENTREGADO = 'entregado';
 
     /**
      * Consulta el estado de un envío por código.
@@ -45,12 +47,13 @@ class TrackingService
     }
 
     /**
-     * Llama al endpoint externo. Espera GET con ?codigo= o ?code=
-     * Respuesta esperada (ejemplo): { "code": "BB-001", "status": "en_camino", "current_location": "...", "origin": "...", "destination": "...", "estimated_delivery": "...", "history": [{ "date": "...", "location": "...", "desc": "..." }] }
+     * Llama al endpoint externo. Usa ?code= (ej. system_brayan: /api/frontend/tracking?code=ENC-...).
+     * Acepta respuestas en formato genérico o system_brayan (estado_encomienda, lugar_origen, lugar_destino, fechas).
      */
     private function callExternalApi(string $baseUrl, string $code): ?array
     {
-        $url = str_contains($baseUrl, '?') ? $baseUrl.'&codigo='.urlencode($code) : rtrim($baseUrl, '/').'?codigo='.urlencode($code);
+        $sep = str_contains($baseUrl, '?') ? '&' : '?';
+        $url = rtrim($baseUrl, '/').$sep.'code='.urlencode($code);
 
         try {
             $response = Http::timeout(10)->get($url);
@@ -76,10 +79,16 @@ class TrackingService
 
     /**
      * Normaliza la respuesta del servicio externo al formato interno.
-     * Acepta campos en español o inglés.
+     * Soporta formato system_brayan (estado_encomienda, lugar_origen, lugar_destino, fecha_*) o genérico.
      */
     private function normalizeExternalResponse(string $code, array $data): array
     {
+        $isSystemBrayan = isset($data['estado_encomienda']) || array_key_exists('lugar_origen', $data);
+
+        if ($isSystemBrayan) {
+            return $this->normalizeSystemBrayanResponse($data, $code);
+        }
+
         $status = $this->normalizeStatus($data['status'] ?? $data['estado'] ?? self::STATUS_REGISTRADO);
         $history = [];
         foreach ($data['history'] ?? $data['historial'] ?? [] as $h) {
@@ -103,18 +112,79 @@ class TrackingService
         ];
     }
 
+    /**
+     * Normaliza respuesta de system_brayan: estado_encomienda, lugar_origen, lugar_destino, fecha_*.
+     */
+    private function normalizeSystemBrayanResponse(array $data, string $code): array
+    {
+        $status = $this->normalizeStatus($data['estado_encomienda'] ?? self::STATUS_REGISTRADO);
+        $origin = $data['lugar_origen'] ?? '';
+        $destination = $data['lugar_destino'] ?? '';
+        $history = $this->buildHistoryFromFechas($data);
+
+        $currentLocation = match ($status) {
+            self::STATUS_REGISTRADO => $origin,
+            self::STATUS_ENVIADO => 'En tránsito',
+            self::STATUS_RECIBIDO => $destination,
+            self::STATUS_RETORNADO => 'En retorno',
+            self::STATUS_ENTREGADO => ! empty($data['direccion_envio']) ? $data['direccion_envio'] : $destination,
+            default => $origin,
+        };
+
+        return [
+            'code' => $data['code'] ?? $code,
+            'status' => $status,
+            'status_label' => $this->statusLabel($status),
+            'current_location' => $currentLocation ?: null,
+            'origin' => $origin ?: '—',
+            'destination' => $destination ?: '—',
+            'estimated_delivery' => null,
+            'progress' => $this->progressFromStatus($status),
+            'history' => $history,
+        ];
+    }
+
+    private function buildHistoryFromFechas(array $data): array
+    {
+        $history = [];
+        $formatDate = function ($value) {
+            if ($value === null || $value === '') {
+                return '';
+            }
+            if (is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}/', $value)) {
+                return date('d M, H:i', strtotime($value));
+            }
+            return (string) $value;
+        };
+
+        if (! empty($data['fecha_creacion'])) {
+            $history[] = ['date' => $formatDate($data['fecha_creacion']), 'location' => $data['lugar_origen'] ?? 'Origen', 'desc' => 'Envío registrado'];
+        }
+        if (! empty($data['fecha_envio'])) {
+            $history[] = ['date' => $formatDate($data['fecha_envio']), 'location' => 'En tránsito', 'desc' => 'Enviado'];
+        }
+        if (! empty($data['fecha_recepcion'])) {
+            $history[] = ['date' => $formatDate($data['fecha_recepcion']), 'location' => $data['lugar_destino'] ?? 'Destino', 'desc' => 'Recibido en sucursal destino'];
+        }
+        if (! empty($data['fecha_entrega'])) {
+            $history[] = ['date' => $formatDate($data['fecha_entrega']), 'location' => $data['direccion_envio'] ?? $data['lugar_destino'] ?? 'Destino', 'desc' => 'Entregado'];
+        }
+        if (! empty($data['fecha_retorno'])) {
+            $history[] = ['date' => $formatDate($data['fecha_retorno']), 'location' => 'Retorno', 'desc' => 'Encomienda retornada'];
+        }
+
+        return $history;
+    }
+
     private function normalizeStatus(string $value): string
     {
-        $v = strtolower(trim($value));
+        $v = strtoupper(trim($value));
         $map = [
-            'registrado' => self::STATUS_REGISTRADO,
-            'en camino' => self::STATUS_EN_CAMINO,
-            'en_camino' => self::STATUS_EN_CAMINO,
-            'en almacen' => self::STATUS_EN_ALMACEN,
-            'en_almacen' => self::STATUS_EN_ALMACEN,
-            'almacen' => self::STATUS_EN_ALMACEN,
-            'recogido' => self::STATUS_RECOGIDO,
-            'entregado' => self::STATUS_RECOGIDO,
+            'REGISTRADO' => self::STATUS_REGISTRADO,
+            'ENVIADO' => self::STATUS_ENVIADO,
+            'RECIBIDO' => self::STATUS_RECIBIDO,
+            'RETORNADO' => self::STATUS_RETORNADO,
+            'ENTREGADO' => self::STATUS_ENTREGADO,
         ];
 
         return $map[$v] ?? self::STATUS_REGISTRADO;
@@ -124,9 +194,10 @@ class TrackingService
     {
         return match ($status) {
             self::STATUS_REGISTRADO => 'Registrado',
-            self::STATUS_EN_CAMINO => 'En camino',
-            self::STATUS_EN_ALMACEN => 'En almacén',
-            self::STATUS_RECOGIDO => 'Recogido',
+            self::STATUS_ENVIADO => 'Enviado',
+            self::STATUS_RECIBIDO => 'Recibido',
+            self::STATUS_RETORNADO => 'Retornado',
+            self::STATUS_ENTREGADO => 'Entregado',
             default => 'Registrado',
         };
     }
@@ -134,10 +205,11 @@ class TrackingService
     private function progressFromStatus(string $status): int
     {
         return match ($status) {
-            self::STATUS_REGISTRADO => 15,
-            self::STATUS_EN_CAMINO => 50,
-            self::STATUS_EN_ALMACEN => 85,
-            self::STATUS_RECOGIDO => 100,
+            self::STATUS_REGISTRADO => 20,
+            self::STATUS_ENVIADO => 40,
+            self::STATUS_RECIBIDO => 60,
+            self::STATUS_RETORNADO => 80,
+            self::STATUS_ENTREGADO => 100,
             default => 0,
         };
     }
@@ -152,34 +224,28 @@ class TrackingService
             $codeUpper = 'BB-2024-DEMO';
         }
 
-        $status = self::STATUS_EN_CAMINO;
+        $status = self::STATUS_ENVIADO;
         $history = [
-            ['date' => '24 Feb, 08:00', 'location' => 'Lima - Oficina Central', 'desc' => 'Envío registrado y aceptado'],
-            ['date' => '24 Feb, 14:30', 'location' => 'Centro de Consolidación - Huachipa', 'desc' => 'Paquete en camino al almacén'],
-            ['date' => '25 Feb, 09:15', 'location' => 'Centro Distribución - Huachipa', 'desc' => 'En ruta hacia destino final'],
+            ['date' => '24 Feb, 08:00', 'location' => 'Lima - Oficina Central', 'desc' => 'Envío registrado'],
+            ['date' => '24 Feb, 14:30', 'location' => 'En tránsito', 'desc' => 'Enviado'],
         ];
 
-        if (str_ends_with($codeUpper, '-R')) {
-            $status = self::STATUS_RECOGIDO;
-            $history[] = ['date' => '25 Feb, 11:00', 'location' => 'Arequipa - Sede Central', 'desc' => 'Envío recogido por el destinatario'];
-        } elseif (str_ends_with($codeUpper, '-A')) {
-            $status = self::STATUS_EN_ALMACEN;
-            $history[] = ['date' => '25 Feb, 08:00', 'location' => 'Almacén Arequipa', 'desc' => 'Paquete en almacén, listo para recoger'];
-        } elseif (str_ends_with($codeUpper, '-0')) {
+        if (str_ends_with($codeUpper, '-0')) {
             $status = self::STATUS_REGISTRADO;
-            $history = [
-                ['date' => date('d M, H:i', strtotime('-1 hour')), 'location' => 'Lima', 'desc' => 'Envío registrado en sistema'],
-            ];
+            $history = [['date' => date('d M, H:i', strtotime('-1 hour')), 'location' => 'Lima', 'desc' => 'Envío registrado en sistema']];
+        } elseif (str_ends_with($codeUpper, '-R')) {
+            $status = self::STATUS_ENTREGADO;
+            $history[] = ['date' => '25 Feb, 11:00', 'location' => 'Arequipa', 'desc' => 'Entregado'];
         }
 
         return [
             'code' => $codeUpper,
             'status' => $status,
             'status_label' => $this->statusLabel($status),
-            'current_location' => $status === self::STATUS_EN_CAMINO ? 'Centro Distribución - Huachipa, Lima' : ($status === self::STATUS_EN_ALMACEN ? 'Almacén Arequipa' : ($status === self::STATUS_RECOGIDO ? 'Entregado' : 'Oficina Lima')),
+            'current_location' => $status === self::STATUS_ENTREGADO ? 'Entregado' : ($status === self::STATUS_ENVIADO ? 'En tránsito' : 'Oficina Lima'),
             'origin' => 'Puerto del Callao, Lima',
             'destination' => 'Sede Central Arequipa',
-            'estimated_delivery' => $status === self::STATUS_RECOGIDO ? null : 'Mañana, 09:00 AM',
+            'estimated_delivery' => $status === self::STATUS_ENTREGADO ? null : 'Mañana, 09:00 AM',
             'progress' => $this->progressFromStatus($status),
             'history' => $history,
         ];

@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\v1\AuthController;
 use App\Http\Controllers\Api\v1\EncomiendaEntregaController;
 use App\Http\Controllers\Api\v1\EncomiendaEntregaDomicilioController;
 use App\Http\Controllers\Api\v1\EncomiendaRetornoController;
+use App\Http\Controllers\Api\frontend\RastreoController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -18,4 +19,8 @@ Route::prefix('v1')->group(function () {
         Route::post('encomiendas/entrega-domicilio', [EncomiendaEntregaDomicilioController::class, 'entregar']);
         Route::post('encomiendas/retorno', [EncomiendaRetornoController::class, 'retornar']);
     });
+});
+// {url}/api/frontend/tracking?code=BB-001
+Route::prefix('frontend')->group(function () {
+    Route::get('tracking', [RastreoController::class, 'show']);
 });
