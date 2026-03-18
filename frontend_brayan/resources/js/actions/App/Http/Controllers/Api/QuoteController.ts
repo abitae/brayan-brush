@@ -137,7 +137,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
  * @see app/Http/Controllers/Api/QuoteController.php:57
  * @route '/api/quotes/{quote}'
  */
-export const update = (args: { quote: number | { id: number } } | [quote: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+export const update = (args: { quote: string | number | { id: string | number } } | [quote: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update.url(args, options),
     method: 'put',
 })
@@ -152,7 +152,7 @@ update.definition = {
  * @see app/Http/Controllers/Api/QuoteController.php:57
  * @route '/api/quotes/{quote}'
  */
-update.url = (args: { quote: number | { id: number } } | [quote: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+update.url = (args: { quote: string | number | { id: string | number } } | [quote: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { quote: args }
     }
@@ -185,7 +185,7 @@ update.url = (args: { quote: number | { id: number } } | [quote: number | { id: 
  * @see app/Http/Controllers/Api/QuoteController.php:57
  * @route '/api/quotes/{quote}'
  */
-update.put = (args: { quote: number | { id: number } } | [quote: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+update.put = (args: { quote: string | number | { id: string | number } } | [quote: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update.url(args, options),
     method: 'put',
 })
@@ -195,7 +195,7 @@ update.put = (args: { quote: number | { id: number } } | [quote: number | { id: 
  * @see app/Http/Controllers/Api/QuoteController.php:57
  * @route '/api/quotes/{quote}'
  */
-    const updateForm = (args: { quote: number | { id: number } } | [quote: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    const updateForm = (args: { quote: string | number | { id: string | number } } | [quote: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: update.url(args, {
                     [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                         _method: 'PUT',
@@ -210,7 +210,7 @@ update.put = (args: { quote: number | { id: number } } | [quote: number | { id: 
  * @see app/Http/Controllers/Api/QuoteController.php:57
  * @route '/api/quotes/{quote}'
  */
-        updateForm.put = (args: { quote: number | { id: number } } | [quote: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        updateForm.put = (args: { quote: string | number | { id: string | number } } | [quote: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: update.url(args, {
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'PUT',
@@ -226,7 +226,7 @@ update.put = (args: { quote: number | { id: number } } | [quote: number | { id: 
  * @see app/Http/Controllers/Api/QuoteController.php:84
  * @route '/api/quotes/{quote}'
  */
-export const destroy = (args: { quote: number | { id: number } } | [quote: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+export const destroy = (args: { quote: string | number | { id: string | number } } | [quote: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy.url(args, options),
     method: 'delete',
 })
@@ -241,7 +241,7 @@ destroy.definition = {
  * @see app/Http/Controllers/Api/QuoteController.php:84
  * @route '/api/quotes/{quote}'
  */
-destroy.url = (args: { quote: number | { id: number } } | [quote: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+destroy.url = (args: { quote: string | number | { id: string | number } } | [quote: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { quote: args }
     }
@@ -274,7 +274,7 @@ destroy.url = (args: { quote: number | { id: number } } | [quote: number | { id:
  * @see app/Http/Controllers/Api/QuoteController.php:84
  * @route '/api/quotes/{quote}'
  */
-destroy.delete = (args: { quote: number | { id: number } } | [quote: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+destroy.delete = (args: { quote: string | number | { id: string | number } } | [quote: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy.url(args, options),
     method: 'delete',
 })
@@ -284,7 +284,7 @@ destroy.delete = (args: { quote: number | { id: number } } | [quote: number | { 
  * @see app/Http/Controllers/Api/QuoteController.php:84
  * @route '/api/quotes/{quote}'
  */
-    const destroyForm = (args: { quote: number | { id: number } } | [quote: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    const destroyForm = (args: { quote: string | number | { id: string | number } } | [quote: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: destroy.url(args, {
                     [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                         _method: 'DELETE',
@@ -299,7 +299,7 @@ destroy.delete = (args: { quote: number | { id: number } } | [quote: number | { 
  * @see app/Http/Controllers/Api/QuoteController.php:84
  * @route '/api/quotes/{quote}'
  */
-        destroyForm.delete = (args: { quote: number | { id: number } } | [quote: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        destroyForm.delete = (args: { quote: string | number | { id: string | number } } | [quote: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: destroy.url(args, {
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'DELETE',

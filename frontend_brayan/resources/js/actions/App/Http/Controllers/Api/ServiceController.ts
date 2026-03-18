@@ -137,7 +137,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
  * @see app/Http/Controllers/Api/ServiceController.php:47
  * @route '/api/services/{service}'
  */
-export const update = (args: { service: number | { id: number } } | [service: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+export const update = (args: { service: string | number | { id: string | number } } | [service: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update.url(args, options),
     method: 'put',
 })
@@ -152,7 +152,7 @@ update.definition = {
  * @see app/Http/Controllers/Api/ServiceController.php:47
  * @route '/api/services/{service}'
  */
-update.url = (args: { service: number | { id: number } } | [service: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+update.url = (args: { service: string | number | { id: string | number } } | [service: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { service: args }
     }
@@ -185,7 +185,7 @@ update.url = (args: { service: number | { id: number } } | [service: number | { 
  * @see app/Http/Controllers/Api/ServiceController.php:47
  * @route '/api/services/{service}'
  */
-update.put = (args: { service: number | { id: number } } | [service: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+update.put = (args: { service: string | number | { id: string | number } } | [service: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update.url(args, options),
     method: 'put',
 })
@@ -195,7 +195,7 @@ update.put = (args: { service: number | { id: number } } | [service: number | { 
  * @see app/Http/Controllers/Api/ServiceController.php:47
  * @route '/api/services/{service}'
  */
-    const updateForm = (args: { service: number | { id: number } } | [service: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    const updateForm = (args: { service: string | number | { id: string | number } } | [service: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: update.url(args, {
                     [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                         _method: 'PUT',
@@ -210,7 +210,7 @@ update.put = (args: { service: number | { id: number } } | [service: number | { 
  * @see app/Http/Controllers/Api/ServiceController.php:47
  * @route '/api/services/{service}'
  */
-        updateForm.put = (args: { service: number | { id: number } } | [service: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        updateForm.put = (args: { service: string | number | { id: string | number } } | [service: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: update.url(args, {
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'PUT',
@@ -226,7 +226,7 @@ update.put = (args: { service: number | { id: number } } | [service: number | { 
  * @see app/Http/Controllers/Api/ServiceController.php:60
  * @route '/api/services/{service}'
  */
-export const destroy = (args: { service: number | { id: number } } | [service: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+export const destroy = (args: { service: string | number | { id: string | number } } | [service: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy.url(args, options),
     method: 'delete',
 })
@@ -241,7 +241,7 @@ destroy.definition = {
  * @see app/Http/Controllers/Api/ServiceController.php:60
  * @route '/api/services/{service}'
  */
-destroy.url = (args: { service: number | { id: number } } | [service: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+destroy.url = (args: { service: string | number | { id: string | number } } | [service: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { service: args }
     }
@@ -274,7 +274,7 @@ destroy.url = (args: { service: number | { id: number } } | [service: number | {
  * @see app/Http/Controllers/Api/ServiceController.php:60
  * @route '/api/services/{service}'
  */
-destroy.delete = (args: { service: number | { id: number } } | [service: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+destroy.delete = (args: { service: string | number | { id: string | number } } | [service: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy.url(args, options),
     method: 'delete',
 })
@@ -284,7 +284,7 @@ destroy.delete = (args: { service: number | { id: number } } | [service: number 
  * @see app/Http/Controllers/Api/ServiceController.php:60
  * @route '/api/services/{service}'
  */
-    const destroyForm = (args: { service: number | { id: number } } | [service: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    const destroyForm = (args: { service: string | number | { id: string | number } } | [service: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: destroy.url(args, {
                     [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                         _method: 'DELETE',
@@ -299,7 +299,7 @@ destroy.delete = (args: { service: number | { id: number } } | [service: number 
  * @see app/Http/Controllers/Api/ServiceController.php:60
  * @route '/api/services/{service}'
  */
-        destroyForm.delete = (args: { service: number | { id: number } } | [service: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        destroyForm.delete = (args: { service: string | number | { id: string | number } } | [service: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: destroy.url(args, {
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'DELETE',
@@ -315,7 +315,7 @@ destroy.delete = (args: { service: number | { id: number } } | [service: number 
  * @see app/Http/Controllers/Api/ServiceController.php:67
  * @route '/api/services/{service}/upload-image'
  */
-export const uploadImage = (args: { service: number | { id: number } } | [service: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+export const uploadImage = (args: { service: string | number | { id: string | number } } | [service: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: uploadImage.url(args, options),
     method: 'post',
 })
@@ -330,7 +330,7 @@ uploadImage.definition = {
  * @see app/Http/Controllers/Api/ServiceController.php:67
  * @route '/api/services/{service}/upload-image'
  */
-uploadImage.url = (args: { service: number | { id: number } } | [service: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+uploadImage.url = (args: { service: string | number | { id: string | number } } | [service: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { service: args }
     }
@@ -363,7 +363,7 @@ uploadImage.url = (args: { service: number | { id: number } } | [service: number
  * @see app/Http/Controllers/Api/ServiceController.php:67
  * @route '/api/services/{service}/upload-image'
  */
-uploadImage.post = (args: { service: number | { id: number } } | [service: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+uploadImage.post = (args: { service: string | number | { id: string | number } } | [service: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: uploadImage.url(args, options),
     method: 'post',
 })
@@ -373,7 +373,7 @@ uploadImage.post = (args: { service: number | { id: number } } | [service: numbe
  * @see app/Http/Controllers/Api/ServiceController.php:67
  * @route '/api/services/{service}/upload-image'
  */
-    const uploadImageForm = (args: { service: number | { id: number } } | [service: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    const uploadImageForm = (args: { service: string | number | { id: string | number } } | [service: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: uploadImage.url(args, options),
         method: 'post',
     })
@@ -383,7 +383,7 @@ uploadImage.post = (args: { service: number | { id: number } } | [service: numbe
  * @see app/Http/Controllers/Api/ServiceController.php:67
  * @route '/api/services/{service}/upload-image'
  */
-        uploadImageForm.post = (args: { service: number | { id: number } } | [service: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        uploadImageForm.post = (args: { service: string | number | { id: string | number } } | [service: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: uploadImage.url(args, options),
             method: 'post',
         })

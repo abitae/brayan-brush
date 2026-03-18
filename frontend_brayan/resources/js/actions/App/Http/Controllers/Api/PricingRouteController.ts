@@ -137,7 +137,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
  * @see app/Http/Controllers/Api/PricingRouteController.php:51
  * @route '/api/pricing-routes/{pricingRoute}'
  */
-export const update = (args: { pricingRoute: number | { id: number } } | [pricingRoute: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+export const update = (args: { pricingRoute: string | number | { id: string | number } } | [pricingRoute: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update.url(args, options),
     method: 'put',
 })
@@ -152,7 +152,7 @@ update.definition = {
  * @see app/Http/Controllers/Api/PricingRouteController.php:51
  * @route '/api/pricing-routes/{pricingRoute}'
  */
-update.url = (args: { pricingRoute: number | { id: number } } | [pricingRoute: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+update.url = (args: { pricingRoute: string | number | { id: string | number } } | [pricingRoute: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { pricingRoute: args }
     }
@@ -185,7 +185,7 @@ update.url = (args: { pricingRoute: number | { id: number } } | [pricingRoute: n
  * @see app/Http/Controllers/Api/PricingRouteController.php:51
  * @route '/api/pricing-routes/{pricingRoute}'
  */
-update.put = (args: { pricingRoute: number | { id: number } } | [pricingRoute: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+update.put = (args: { pricingRoute: string | number | { id: string | number } } | [pricingRoute: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update.url(args, options),
     method: 'put',
 })
@@ -195,7 +195,7 @@ update.put = (args: { pricingRoute: number | { id: number } } | [pricingRoute: n
  * @see app/Http/Controllers/Api/PricingRouteController.php:51
  * @route '/api/pricing-routes/{pricingRoute}'
  */
-    const updateForm = (args: { pricingRoute: number | { id: number } } | [pricingRoute: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    const updateForm = (args: { pricingRoute: string | number | { id: string | number } } | [pricingRoute: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: update.url(args, {
                     [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                         _method: 'PUT',
@@ -210,7 +210,7 @@ update.put = (args: { pricingRoute: number | { id: number } } | [pricingRoute: n
  * @see app/Http/Controllers/Api/PricingRouteController.php:51
  * @route '/api/pricing-routes/{pricingRoute}'
  */
-        updateForm.put = (args: { pricingRoute: number | { id: number } } | [pricingRoute: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        updateForm.put = (args: { pricingRoute: string | number | { id: string | number } } | [pricingRoute: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: update.url(args, {
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'PUT',
@@ -226,7 +226,7 @@ update.put = (args: { pricingRoute: number | { id: number } } | [pricingRoute: n
  * @see app/Http/Controllers/Api/PricingRouteController.php:75
  * @route '/api/pricing-routes/{pricingRoute}'
  */
-export const destroy = (args: { pricingRoute: number | { id: number } } | [pricingRoute: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+export const destroy = (args: { pricingRoute: string | number | { id: string | number } } | [pricingRoute: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy.url(args, options),
     method: 'delete',
 })
@@ -241,7 +241,7 @@ destroy.definition = {
  * @see app/Http/Controllers/Api/PricingRouteController.php:75
  * @route '/api/pricing-routes/{pricingRoute}'
  */
-destroy.url = (args: { pricingRoute: number | { id: number } } | [pricingRoute: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+destroy.url = (args: { pricingRoute: string | number | { id: string | number } } | [pricingRoute: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { pricingRoute: args }
     }
@@ -274,7 +274,7 @@ destroy.url = (args: { pricingRoute: number | { id: number } } | [pricingRoute: 
  * @see app/Http/Controllers/Api/PricingRouteController.php:75
  * @route '/api/pricing-routes/{pricingRoute}'
  */
-destroy.delete = (args: { pricingRoute: number | { id: number } } | [pricingRoute: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+destroy.delete = (args: { pricingRoute: string | number | { id: string | number } } | [pricingRoute: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy.url(args, options),
     method: 'delete',
 })
@@ -284,7 +284,7 @@ destroy.delete = (args: { pricingRoute: number | { id: number } } | [pricingRout
  * @see app/Http/Controllers/Api/PricingRouteController.php:75
  * @route '/api/pricing-routes/{pricingRoute}'
  */
-    const destroyForm = (args: { pricingRoute: number | { id: number } } | [pricingRoute: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    const destroyForm = (args: { pricingRoute: string | number | { id: string | number } } | [pricingRoute: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: destroy.url(args, {
                     [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                         _method: 'DELETE',
@@ -299,7 +299,7 @@ destroy.delete = (args: { pricingRoute: number | { id: number } } | [pricingRout
  * @see app/Http/Controllers/Api/PricingRouteController.php:75
  * @route '/api/pricing-routes/{pricingRoute}'
  */
-        destroyForm.delete = (args: { pricingRoute: number | { id: number } } | [pricingRoute: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        destroyForm.delete = (args: { pricingRoute: string | number | { id: string | number } } | [pricingRoute: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: destroy.url(args, {
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'DELETE',
