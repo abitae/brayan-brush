@@ -14,8 +14,17 @@ export interface CalculatorDefaults {
   default_height?: number;
 }
 
+export interface QuotePayload {
+  nombre: string;
+  email?: string;
+  telefono: string;
+  servicio: string;
+  mensaje: string;
+  estimated_price?: number;
+}
+
 interface CalculatorSectionProps {
-  onQuoteSubmit?: (quote: Record<string, string>) => void;
+  onQuoteSubmit?: (quote: QuotePayload) => Promise<void> | void;
   calculatorDefaults?: CalculatorDefaults | null;
 }
 
@@ -37,6 +46,7 @@ export default function CalculatorSection({ onQuoteSubmit, calculatorDefaults }:
   const [bookingEmail, setBookingEmail] = useState('');
   const [bookingDetails, setBookingDetails] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     getPricingRoutes().then(setPricingRoutes).catch(() => {});
@@ -62,26 +72,35 @@ export default function CalculatorSection({ onQuoteSubmit, calculatorDefaults }:
     });
   }, [weight, length, width, height, origin, destination, serviceType, calcMode, pricingRoutes]);
 
-  const handleBookingSubmit = (e: React.FormEvent) => {
+  const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const fullDetails = `Cotización: S/ ${result.total}. Ruta: ${origin} a ${destination}. Peso: ${result.charged}kg. ${bookingDetails}`;
-    onQuoteSubmit?.({
-      nombre: bookingName,
-      email: bookingEmail || '',
-      telefono: bookingPhone,
-      servicio: `Reserva - ${serviceType.toUpperCase()}`,
-      mensaje: fullDetails,
-      estimated_price: result.total,
-    });
-    setIsSuccess(true);
-    setTimeout(() => {
-      setIsSuccess(false);
-      setIsModalOpen(false);
-      setBookingName('');
-      setBookingPhone('');
-      setBookingDetails('');
-      setBookingEmail('');
-    }, 4000);
+    setIsSubmitting(true);
+    const fullDetails = `Cotización: S/ ${result.total.toFixed(2)}. Ruta: ${origin} a ${destination}. Peso: ${result.charged}kg. ${bookingDetails}`;
+    
+    try {
+      if (onQuoteSubmit) {
+        await Promise.resolve(onQuoteSubmit({
+          nombre: bookingName,
+          email: bookingEmail || '',
+          telefono: bookingPhone,
+          servicio: `Reserva - ${serviceType.toUpperCase()}`,
+          mensaje: fullDetails,
+          estimated_price: result.total,
+        }));
+      }
+      setIsSuccess(true);
+      setTimeout(() => {
+        setIsSuccess(false);
+        setIsModalOpen(false);
+        setBookingName('');
+        setBookingPhone('');
+        setBookingDetails('');
+        setBookingEmail('');
+        setIsSubmitting(false);
+      }, 4000);
+    } catch (err) {
+      setIsSubmitting(false);
+    }
   };
 
   const ContainerIcon = ICONS.Container;
@@ -266,7 +285,7 @@ export default function CalculatorSection({ onQuoteSubmit, calculatorDefaults }:
                   Total Estimado
                 </span>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-7xl font-black tracking-tighter">S/ {result.total}</span>
+                  <span className="text-7xl font-black tracking-tighter">S/ {result.total.toFixed(2)}</span>
                 </div>
                 <p className="text-[10px] text-slate-500 font-medium leading-relaxed mt-4">
                   * Tarifa aproximada. Incluye IGV y seguros básicos.
@@ -326,7 +345,7 @@ export default function CalculatorSection({ onQuoteSubmit, calculatorDefaults }:
                     <p className="font-black text-slate-900 text-lg">{origin} → {destination}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-emerald-600 font-black text-2xl">S/ {result.total}</p>
+                    <p className="text-emerald-600 font-black text-2xl">S/ {result.total.toFixed(2)}</p>
                   </div>
                 </div>
                 <form onSubmit={handleBookingSubmit} className="space-y-6">
@@ -388,9 +407,18 @@ export default function CalculatorSection({ onQuoteSubmit, calculatorDefaults }:
                   </div>
                   <button
                     type="submit"
-                    className="w-full bg-emerald-600 text-white py-6 rounded-3xl font-black text-xl hover:bg-emerald-500 transition-all"
+                    disabled={isSubmitting}
+                    className="w-full bg-emerald-600 text-white py-6 rounded-3xl font-black text-xl hover:bg-emerald-500 transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-lg hover:shadow-xl hover:shadow-emerald-500/30 flex justify-center items-center gap-2"
                   >
-                    Confirmar Reserva
+                    {isSubmitting ? (
+                       <span className="animate-pulse flex items-center gap-2">
+                          <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Procesando Reserva...
+                       </span>
+                    ) : 'Confirmar Reserva'}
                   </button>
                 </form>
               </>

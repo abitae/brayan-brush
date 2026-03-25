@@ -1,4 +1,5 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
+import servicios3c6a55 from './servicios'
 /**
 * @see \App\Http\Controllers\BrayanBrush\CotizarController::__invoke
  * @see app/Http/Controllers/BrayanBrush/CotizarController.php:12
@@ -156,7 +157,7 @@ rastreo.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     
     rastreo.form = rastreoForm
 /**
-* @see \App\Http\Controllers\BrayanBrush\ServiciosController::__invoke
+* @see \App\Http\Controllers\BrayanBrush\ServiciosController::servicios
  * @see app/Http/Controllers/BrayanBrush/ServiciosController.php:12
  * @route '/servicios'
  */
@@ -171,7 +172,7 @@ servicios.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see \App\Http\Controllers\BrayanBrush\ServiciosController::__invoke
+* @see \App\Http\Controllers\BrayanBrush\ServiciosController::servicios
  * @see app/Http/Controllers/BrayanBrush/ServiciosController.php:12
  * @route '/servicios'
  */
@@ -180,7 +181,7 @@ servicios.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see \App\Http\Controllers\BrayanBrush\ServiciosController::__invoke
+* @see \App\Http\Controllers\BrayanBrush\ServiciosController::servicios
  * @see app/Http/Controllers/BrayanBrush/ServiciosController.php:12
  * @route '/servicios'
  */
@@ -189,7 +190,7 @@ servicios.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     method: 'get',
 })
 /**
-* @see \App\Http\Controllers\BrayanBrush\ServiciosController::__invoke
+* @see \App\Http\Controllers\BrayanBrush\ServiciosController::servicios
  * @see app/Http/Controllers/BrayanBrush/ServiciosController.php:12
  * @route '/servicios'
  */
@@ -199,7 +200,7 @@ servicios.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
-* @see \App\Http\Controllers\BrayanBrush\ServiciosController::__invoke
+* @see \App\Http\Controllers\BrayanBrush\ServiciosController::servicios
  * @see app/Http/Controllers/BrayanBrush/ServiciosController.php:12
  * @route '/servicios'
  */
@@ -209,7 +210,7 @@ servicios.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
-* @see \App\Http\Controllers\BrayanBrush\ServiciosController::__invoke
+* @see \App\Http\Controllers\BrayanBrush\ServiciosController::servicios
  * @see app/Http/Controllers/BrayanBrush/ServiciosController.php:12
  * @route '/servicios'
  */
@@ -218,7 +219,7 @@ servicios.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
             method: 'get',
         })
             /**
-* @see \App\Http\Controllers\BrayanBrush\ServiciosController::__invoke
+* @see \App\Http\Controllers\BrayanBrush\ServiciosController::servicios
  * @see app/Http/Controllers/BrayanBrush/ServiciosController.php:12
  * @route '/servicios'
  */
@@ -704,7 +705,7 @@ admin.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 const brayan = {
     cotizar: Object.assign(cotizar, cotizar),
 rastreo: Object.assign(rastreo, rastreo),
-servicios: Object.assign(servicios, servicios),
+servicios: Object.assign(servicios, servicios3c6a55),
 nosotros: Object.assign(nosotros, nosotros),
 agencias: Object.assign(agencias, agencias),
 contacto: Object.assign(contacto, contacto),

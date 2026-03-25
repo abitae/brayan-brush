@@ -3,6 +3,7 @@ import type { PropsWithChildren } from 'react';
 import { ICONS } from '@/constants/brayan';
 import SmartAssistant from '@/components/brayan-brush/SmartAssistant';
 import { logout } from '@/routes';
+import FlashMessages from '@/components/FlashMessages';
 
 interface SiteConfigShared {
   company_name: string;
@@ -216,6 +217,7 @@ export default function BrayanBrushLayout({ children }: PropsWithChildren) {
           </div>
         </div>
       </footer>
+      <FlashMessages />
       {path !== 'admin' && <SmartAssistant />}
     </div>
   );

@@ -107,7 +107,16 @@ export default function Home({ services }: HomeProps) {
           </div>
         </div>
       </section>
-      <div id="servicios">
+      <div id="servicios" className="pt-24 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-4 text-center mb-4">
+          <span className="text-emerald-600 font-black uppercase tracking-[0.2em] text-[10px] mb-4 block">
+            Portafolio Estratégico
+          </span>
+          <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">Servicios Especializados</h2>
+          <p className="text-slate-500 max-w-2xl mx-auto text-lg">
+            Soluciones logísticas adaptadas dinámicamente para cada tipo de carga.
+          </p>
+        </div>
         <ServicesSection items={services} />
       </div>
       <div id="nosotros">

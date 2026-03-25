@@ -1,3 +1,4 @@
+import Swal from 'sweetalert2';
 import { useState, useEffect } from 'react';
 import { Link, router } from '@inertiajs/react';
 import {
@@ -114,7 +115,7 @@ export default function AdminDashboard({
       else if (type === 'banner') setLocalConfig((c) => ({ ...c, banner_url: url }));
       else setLocalConfig((c) => ({ ...c, banner_bg_url: url }));
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al subir el archivo.');
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al subir el archivo.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     } finally {
       setUploading(null);
     }
@@ -125,9 +126,9 @@ export default function AdminDashboard({
     setSaving(true);
     try {
       await updateConfig(localConfig);
-      alert('Configuración guardada.');
+      Swal.fire({ icon: 'success', text: 'Configuración guardada.', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false });
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al guardar.');
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al guardar.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     } finally {
       setSaving(false);
     }
@@ -151,9 +152,9 @@ export default function AdminDashboard({
       await updateConfig(payload);
       setGeminiApiKeyInput('');
       setOpenaiApiKeyInput('');
-      alert('Configuración del asistente guardada.');
+      Swal.fire({ icon: 'success', text: 'Configuración del asistente guardada.', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false });
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al guardar.');
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al guardar.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     } finally {
       setSaving(false);
     }
@@ -171,7 +172,7 @@ export default function AdminDashboard({
       setLocalServices((prev) => [...prev, created]);
       setNewService({ title: '', description: '', icon_type: 'Box' });
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al crear servicio.');
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al crear servicio.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     }
   };
 
@@ -181,17 +182,18 @@ export default function AdminDashboard({
       setLocalServices((prev) => prev.map((s) => (s.id === id ? updated : s)));
       setEditingServiceId(null);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al actualizar.');
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al actualizar.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     }
   };
 
   const handleDeleteService = async (id: string) => {
-    if (!confirm('¿Eliminar este servicio?')) return;
+    const res = await Swal.fire({ title: '¿Confirmar acción?', text: '¿Eliminar este servicio?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí', cancelButtonText: 'No' });
+    if (!res.isConfirmed) return;
     try {
       await deleteService(id);
       setLocalServices((prev) => prev.filter((s) => s.id !== id));
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al eliminar.');
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al eliminar.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     }
   };
 
@@ -203,7 +205,7 @@ export default function AdminDashboard({
       const res = await uploadServiceImage(serviceId, file);
       setLocalServices((prev) => prev.map((s) => (s.id === serviceId ? res.service : s)));
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al subir la imagen.');
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al subir la imagen.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     } finally {
       setUploading(null);
     }
@@ -224,7 +226,7 @@ export default function AdminDashboard({
       setLocalPricingRoutes((prev) => [...prev, created]);
       setNewPricingRoute({ origin: '', destination: '', base_fee: 25, price_per_kg: 1.5, volumetric_factor: 5000 });
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al crear ruta.');
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al crear ruta.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     }
   };
 
@@ -237,17 +239,18 @@ export default function AdminDashboard({
       setLocalPricingRoutes((prev) => prev.map((r) => (r.id === id ? updated : r)));
       setEditingPricingId(null);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al actualizar.');
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al actualizar.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     }
   };
 
   const handleDeletePricingRoute = async (id: number) => {
-    if (!confirm('¿Eliminar esta ruta de precio?')) return;
+    const res = await Swal.fire({ title: '¿Confirmar acción?', text: '¿Eliminar esta ruta de precio?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí', cancelButtonText: 'No' });
+    if (!res.isConfirmed) return;
     try {
       await deletePricingRoute(id);
       setLocalPricingRoutes((prev) => prev.filter((r) => r.id !== id));
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al eliminar.');
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al eliminar.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     }
   };
 
@@ -259,7 +262,7 @@ export default function AdminDashboard({
       setLocalProhibited((prev) => [...prev, created]);
       setNewCategoryTitle('');
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al crear categoría.');
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al crear categoría.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     }
   };
 
@@ -268,17 +271,18 @@ export default function AdminDashboard({
       const updated = await updateProhibitedCategory(id, { title });
       setLocalProhibited((prev) => prev.map((c) => (c.id === id ? updated : c)));
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al actualizar categoría.');
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al actualizar categoría.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     }
   };
 
   const handleDeleteCategory = async (id: number) => {
-    if (!confirm('¿Eliminar esta categoría y todos sus ítems?')) return;
+    const res = await Swal.fire({ title: '¿Confirmar acción?', text: '¿Eliminar esta categoría y todos sus ítems?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí', cancelButtonText: 'No' });
+    if (!res.isConfirmed) return;
     try {
       await deleteProhibitedCategory(id);
       setLocalProhibited((prev) => prev.filter((c) => c.id !== id));
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al eliminar.');
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al eliminar.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     }
   };
 
@@ -290,7 +294,7 @@ export default function AdminDashboard({
         prev.map((c) => (c.id === categoryId ? { ...c, items: [...c.items, created] } : c))
       );
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al agregar ítem.');
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al agregar ítem.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     }
   };
 
@@ -303,19 +307,20 @@ export default function AdminDashboard({
         )
       );
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al actualizar ítem.');
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al actualizar ítem.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     }
   };
 
   const handleDeleteItem = async (categoryId: number, itemId: number) => {
-    if (!confirm('¿Eliminar este ítem?')) return;
+    const res = await Swal.fire({ title: '¿Confirmar acción?', text: '¿Eliminar este ítem?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí', cancelButtonText: 'No' });
+    if (!res.isConfirmed) return;
     try {
       await deleteProhibitedItem(itemId);
       setLocalProhibited((prev) =>
         prev.map((c) => (c.id === categoryId ? { ...c, items: c.items.filter((i) => i.id !== itemId) } : c))
       );
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al eliminar.');
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al eliminar.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     }
   };
 
@@ -325,17 +330,18 @@ export default function AdminDashboard({
       const updated = await updateQuote(id, { final_price });
       setLocalQuotes((prev) => prev.map((q) => (q.id === id ? updated : q)));
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al actualizar precio.');
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al actualizar precio.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     }
   };
 
   const handleDeleteQuote = async (id: number) => {
-    if (!confirm('¿Eliminar esta cotización?')) return;
+    const res = await Swal.fire({ title: '¿Confirmar acción?', text: '¿Eliminar esta cotización?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí', cancelButtonText: 'No' });
+    if (!res.isConfirmed) return;
     try {
       await deleteQuote(id);
       setLocalQuotes((prev) => prev.filter((q) => q.id !== id));
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al eliminar.');
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al eliminar.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     }
   };
 

@@ -21,7 +21,8 @@ Route::prefix('api')->group(function () {
 Route::get('/', HomeController::class)->name('home');
 Route::get('/cotizar', CotizarController::class)->name('brayan.cotizar');
 Route::get('/rastreo', RastreoController::class)->name('brayan.rastreo');
-Route::get('/servicios', ServiciosController::class)->name('brayan.servicios');
+Route::get('/servicios', [ServiciosController::class, 'index'])->name('brayan.servicios');
+Route::get('/servicios/{service}', [ServiciosController::class, 'show'])->name('brayan.servicios.show');
 Route::get('/nosotros', NosotrosController::class)->name('brayan.nosotros');
 Route::get('/agencias', AgenciasController::class)->name('brayan.agencias');
 Route::get('/contacto', ContactoController::class)->name('brayan.contacto');

@@ -137,7 +137,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
  * @see app/Http/Controllers/Api/ProhibitedCategoryController.php:47
  * @route '/api/prohibited-categories/{prohibitedCategory}'
  */
-export const update = (args: { prohibitedCategory: string | number | { id: string | number } } | [prohibitedCategory: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+export const update = (args: { prohibitedCategory: number | { id: number } } | [prohibitedCategory: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update.url(args, options),
     method: 'put',
 })
@@ -152,7 +152,7 @@ update.definition = {
  * @see app/Http/Controllers/Api/ProhibitedCategoryController.php:47
  * @route '/api/prohibited-categories/{prohibitedCategory}'
  */
-update.url = (args: { prohibitedCategory: string | number | { id: string | number } } | [prohibitedCategory: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+update.url = (args: { prohibitedCategory: number | { id: number } } | [prohibitedCategory: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { prohibitedCategory: args }
     }
@@ -185,7 +185,7 @@ update.url = (args: { prohibitedCategory: string | number | { id: string | numbe
  * @see app/Http/Controllers/Api/ProhibitedCategoryController.php:47
  * @route '/api/prohibited-categories/{prohibitedCategory}'
  */
-update.put = (args: { prohibitedCategory: string | number | { id: string | number } } | [prohibitedCategory: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+update.put = (args: { prohibitedCategory: number | { id: number } } | [prohibitedCategory: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update.url(args, options),
     method: 'put',
 })
@@ -195,7 +195,7 @@ update.put = (args: { prohibitedCategory: string | number | { id: string | numbe
  * @see app/Http/Controllers/Api/ProhibitedCategoryController.php:47
  * @route '/api/prohibited-categories/{prohibitedCategory}'
  */
-    const updateForm = (args: { prohibitedCategory: string | number | { id: string | number } } | [prohibitedCategory: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    const updateForm = (args: { prohibitedCategory: number | { id: number } } | [prohibitedCategory: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: update.url(args, {
                     [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                         _method: 'PUT',
@@ -210,7 +210,7 @@ update.put = (args: { prohibitedCategory: string | number | { id: string | numbe
  * @see app/Http/Controllers/Api/ProhibitedCategoryController.php:47
  * @route '/api/prohibited-categories/{prohibitedCategory}'
  */
-        updateForm.put = (args: { prohibitedCategory: string | number | { id: string | number } } | [prohibitedCategory: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        updateForm.put = (args: { prohibitedCategory: number | { id: number } } | [prohibitedCategory: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: update.url(args, {
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'PUT',
@@ -226,7 +226,7 @@ update.put = (args: { prohibitedCategory: string | number | { id: string | numbe
  * @see app/Http/Controllers/Api/ProhibitedCategoryController.php:62
  * @route '/api/prohibited-categories/{prohibitedCategory}'
  */
-export const destroy = (args: { prohibitedCategory: string | number | { id: string | number } } | [prohibitedCategory: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+export const destroy = (args: { prohibitedCategory: number | { id: number } } | [prohibitedCategory: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy.url(args, options),
     method: 'delete',
 })
@@ -241,7 +241,7 @@ destroy.definition = {
  * @see app/Http/Controllers/Api/ProhibitedCategoryController.php:62
  * @route '/api/prohibited-categories/{prohibitedCategory}'
  */
-destroy.url = (args: { prohibitedCategory: string | number | { id: string | number } } | [prohibitedCategory: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+destroy.url = (args: { prohibitedCategory: number | { id: number } } | [prohibitedCategory: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { prohibitedCategory: args }
     }
@@ -274,7 +274,7 @@ destroy.url = (args: { prohibitedCategory: string | number | { id: string | numb
  * @see app/Http/Controllers/Api/ProhibitedCategoryController.php:62
  * @route '/api/prohibited-categories/{prohibitedCategory}'
  */
-destroy.delete = (args: { prohibitedCategory: string | number | { id: string | number } } | [prohibitedCategory: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+destroy.delete = (args: { prohibitedCategory: number | { id: number } } | [prohibitedCategory: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy.url(args, options),
     method: 'delete',
 })
@@ -284,7 +284,7 @@ destroy.delete = (args: { prohibitedCategory: string | number | { id: string | n
  * @see app/Http/Controllers/Api/ProhibitedCategoryController.php:62
  * @route '/api/prohibited-categories/{prohibitedCategory}'
  */
-    const destroyForm = (args: { prohibitedCategory: string | number | { id: string | number } } | [prohibitedCategory: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    const destroyForm = (args: { prohibitedCategory: number | { id: number } } | [prohibitedCategory: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
         action: destroy.url(args, {
                     [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                         _method: 'DELETE',
@@ -299,7 +299,7 @@ destroy.delete = (args: { prohibitedCategory: string | number | { id: string | n
  * @see app/Http/Controllers/Api/ProhibitedCategoryController.php:62
  * @route '/api/prohibited-categories/{prohibitedCategory}'
  */
-        destroyForm.delete = (args: { prohibitedCategory: string | number | { id: string | number } } | [prohibitedCategory: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        destroyForm.delete = (args: { prohibitedCategory: number | { id: number } } | [prohibitedCategory: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
             action: destroy.url(args, {
                         [options?.mergeQuery ? 'mergeQuery' : 'query']: {
                             _method: 'DELETE',
