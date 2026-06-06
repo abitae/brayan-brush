@@ -36,7 +36,7 @@
                     @endscope
                     @scope('actions', $vehiculo)
                     <nobr>
-                        <x-mary-button icon="s-pencil-square" wire:click="update({{ $vehiculo->id }})" spinner
+                        <x-mary-button icon="s-pencil-square" wire:click="openEditModal({{ $vehiculo->id }})" spinner
                             class="btn-sm" />
                         <x-mary-button icon="o-trash" wire:click="delete({{ $vehiculo->id }})"
                             wire:confirm.prompt="Estas seguro?\n\nEscribe DELETE para confirmar|DELETE" spinner
@@ -49,8 +49,8 @@
     </div>
     <x-mary-modal wire:model="modalVehiculo" persistent class="backdrop-blur" box-class="max-h-full max-w-128 ">
         <x-mary-icon name="s-envelope" class="text-green-500 text-md"
-            label="{{ !isset($vehiculoForm->vehiculo) ? 'CREAR VEHICULO' : 'EDITAR VEHICULO' }}" />
-        <x-mary-form wire:submit="{{ !isset($vehiculoForm->vehiculo) ? 'create' : 'edit' }}">
+            label="{{ $vehiculoForm->vehiculo ? 'EDITAR VEHÍCULO' : 'REGISTRAR VEHÍCULO' }}" />
+        <x-mary-form wire:submit="{{ $vehiculoForm->vehiculo ? 'edit' : 'create' }}">
             <div class="border border-green-500 rounded-lg">
                 <div class="grid grid-cols-4 p-2">
                     <div class="grid col-span-4 pt-2">
@@ -82,9 +82,9 @@
 
                 </div>
                 <x-slot:actions>
-                    <x-mary-button label="Cancel" @click="$wire.modalVehiculo = false" class="bg-red-500" />
-                    <x-mary-button type="submit" spinner="{{ !isset($vehiculoForm->vehiculo) ? 'create' : 'edit' }}"
-                        label="Save" class="bg-blue-500" />
+                    <x-mary-button label="Cancelar" @click="$wire.closeModal()" class="btn-ghost" />
+                    <x-mary-button type="submit" spinner="{{ $vehiculoForm->vehiculo ? 'edit' : 'create' }}"
+                        label="Guardar" class="btn-primary text-white" />
                 </x-slot:actions>
             </div>
         </x-mary-form>

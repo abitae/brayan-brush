@@ -36,7 +36,7 @@
                     @endscope
                     @scope('actions', $transportista)
                         <nobr>
-                            <x-mary-button icon="s-pencil-square" wire:click="update({{ $transportista->id }})" spinner
+                            <x-mary-button icon="s-pencil-square" wire:click="openEditModal({{ $transportista->id }})" spinner
                                 class="btn-sm" />
                             <x-mary-button icon="o-trash" wire:click="delete({{ $transportista->id }})"
                                 wire:confirm.prompt="Estas seguro?\n\nEscribe DELETE para confirmar|DELETE" spinner
@@ -48,9 +48,9 @@
         </div>
     </div>
     <x-mary-modal wire:model="modalTransportista" persistent class="backdrop-blur" box-class="max-h-full max-w-128 ">
-        <x-mary-icon name="s-envelope" class="text-green-500 text-md"
-            label="{{ !isset($transportistaForm->transportista) ? 'CREAR VEHICULO' : 'EDITAR VEHICULO' }}" />
-        <x-mary-form wire:submit="{{ !isset($transportistaForm->transportista) ? 'create' : 'edit' }}">
+        <x-mary-icon name="o-identification" class="text-primary text-md"
+            label="{{ $transportistaForm->transportista ? 'EDITAR CHOFER' : 'REGISTRAR CHOFER' }}" />
+        <x-mary-form wire:submit="{{ $transportistaForm->transportista ? 'edit' : 'create' }}">
             <div class="border border-green-500 rounded-lg">
                 <div class="grid grid-cols-4 p-2">
                     <div class="grid col-span-4 pt-2">
@@ -74,10 +74,10 @@
                     </div>
                 </div>
                 <x-slot:actions>
-                    <x-mary-button label="Cancel" @click="$wire.modalTransportista = false" class="bg-red-500" />
+                    <x-mary-button label="Cancelar" @click="$wire.closeModal()" class="btn-ghost" />
                     <x-mary-button type="submit"
-                        spinner="{{ !isset($transportistaForm->transportista) ? 'create' : 'edit' }}" label="Save"
-                        class="bg-blue-500" />
+                        spinner="{{ $transportistaForm->transportista ? 'edit' : 'create' }}" label="Guardar"
+                        class="btn-primary text-white" />
                 </x-slot:actions>
             </div>
         </x-mary-form>

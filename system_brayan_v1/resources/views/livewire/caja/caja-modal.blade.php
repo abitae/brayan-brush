@@ -1,81 +1,84 @@
-<x-mary-modal wire:model="modalCaja" persistent class="backdrop-blur" box-class="max-h-full max-w-128">
-    <x-mary-icon name="s-envelope" class="text-{{ !$openCaja ? 'green' : 'red' }}-500 text-md"
-        label="{{ !$openCaja ? 'ABRIR' : 'CERRAR' }} CAJA" />
+{{-- Modal abrir / cerrar caja --}}
+<x-mary-modal wire:model="modalCaja" persistent class="backdrop-blur" box-class="max-w-md">
+    <div class="flex items-center gap-3 mb-4">
+        <div class="flex h-10 w-10 items-center justify-center rounded-full {{ $openCaja ? 'bg-error/15 text-error' : 'bg-success/15 text-success' }}">
+            <x-mary-icon name="{{ $openCaja ? 'o-lock-closed' : 'o-lock-open' }}" class="w-5 h-5" />
+        </div>
+        <div>
+            <h3 class="font-bold text-lg">{{ $openCaja ? 'Cerrar caja' : 'Abrir caja' }}</h3>
+            <p class="text-sm text-base-content/60">
+                {{ $openCaja ? 'Confirma el monto en efectivo para cerrar la sesión' : 'Ingresa el monto inicial en efectivo' }}
+            </p>
+        </div>
+    </div>
+
+    @if ($openCaja && $caja)
+        <x-mary-alert icon="o-information-circle" class="alert-info mb-4"
+            description="Saldo efectivo calculado: S/. {{ number_format($caja->monto_apertura + $caja->entries->where('metodo_pago', 'Efectivo')->sum('monto_entry') - $caja->exits->where('metodo_pago', 'Efectivo')->sum('monto_exit'), 2) }}" />
+    @endif
+
     <x-mary-form wire:submit.prevent="save">
-        <div class="border border-{{ !$openCaja ? 'green' : 'red' }}-500 rounded-lg">
-            <div class="grid grid-cols-4 p-2 space-x-2">
-                <div class="grid col-span-4 pt-2">
-                    <x-mary-input label="Monto {{ !$openCaja ? 'apertura' : 'cierre' }}"
-                        wire:model.live="cajaForm.monto_{{ !$openCaja ? 'apertura' : 'cierre' }}" suffix="PEN" />
-                </div>
-            </div>
-            <x-slot:actions>
-                <x-mary-button label="Cancelar" @click="$wire.modalCaja = false" class="bg-red-500" />
-                <x-mary-button type="submit" spinner="save" label="Guardar" class="bg-blue-500" />
-            </x-slot:actions>
-        </div>
+        <x-mary-input label="Monto {{ $openCaja ? 'de cierre' : 'de apertura' }}"
+            wire:model.live="cajaForm.monto_{{ $openCaja ? 'cierre' : 'apertura' }}"
+            prefix="S/." type="number" step="0.01" min="0" />
+
+        <x-slot:actions>
+            <x-mary-button label="Cancelar" @click="$wire.modalCaja = false" class="btn-ghost" />
+            <x-mary-button type="submit" spinner="save"
+                label="{{ $openCaja ? 'Cerrar caja' : 'Abrir caja' }}"
+                class="{{ $openCaja ? 'btn-error' : 'btn-success' }} text-white" />
+        </x-slot:actions>
     </x-mary-form>
 </x-mary-modal>
 
-<x-mary-modal wire:model="modalEntry" persistent class="backdrop-blur" box-class="max-h-full max-w-128">
-    <x-mary-icon name="s-envelope" class="text-green-500 text-md" label="REGISTRO INGRESO" />
+{{-- Modal ingreso --}}
+<x-mary-modal wire:model="modalEntry" persistent class="backdrop-blur" box-class="max-w-md">
+    <div class="flex items-center gap-3 mb-4">
+        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-success/15 text-success">
+            <x-mary-icon name="o-arrow-down-circle" class="w-5 h-5" />
+        </div>
+        <div>
+            <h3 class="font-bold text-lg">Registrar ingreso</h3>
+            <p class="text-sm text-base-content/60">Entrada de dinero a la caja</p>
+        </div>
+    </div>
+
     <x-mary-form wire:submit="entryCaja">
-        <div class="border border-green-500 rounded-lg">
-            <div class="grid grid-cols-1 p-2 space-x-2">
-                <div class="pt-2">
-                    <x-mary-select label="Tipo" :options="$tipos" wire:model="entryForm.tipo_entry" />
-                </div>
-                <div class="pt-2">
-                    <x-mary-input label="Monto" wire:model="entryForm.monto_entry" suffix="S/" locale="es-PE"
-                        first-error-only />
-                </div>
-                <div class="pt-2">
-                    <x-mary-input label="Descripción" wire:model="entryForm.description" first-error-only />
-                </div>
-                <div>
-                    @php
-                    $metodoPagos = [
-                    ['id' => 'Efectivo', 'name' => 'Efectivo'],
-                    ['id' => 'Yape', 'name' => 'Yape'],
-                    ['id' => 'Transferencia', 'name' => 'Transferencia'],
-                    ['id' => 'Deposito', 'name' => 'Deposito'],
-                    ];
-                    @endphp
-                    <x-mary-select label="Metodo pago" icon="o-user" :options="$metodoPagos"
-                    wire:model="entryForm.metodo_pago" class="rounded-r-lg" />
-                </div>
-            </div>
-            <x-slot:actions>
-                <x-mary-button label="Cancelar" @click="$wire.modalEntry = false" class="bg-red-500" />
-                <x-mary-button type="submit" spinner="save3" label="Guardar" class="bg-blue-500" spinner="entryCaja" />
-            </x-slot:actions>
+        <div class="space-y-3">
+            <x-mary-select label="Tipo" :options="$tipos" wire:model="entryForm.tipo_entry" />
+            <x-mary-input label="Monto" wire:model="entryForm.monto_entry" prefix="S/." type="number" step="0.01" min="0" />
+            <x-mary-input label="Descripción" wire:model="entryForm.description" placeholder="Concepto del ingreso" />
+            <x-mary-select label="Método de pago" icon="o-credit-card" :options="$metodoPagos" wire:model="entryForm.metodo_pago" />
         </div>
+        <x-slot:actions>
+            <x-mary-button label="Cancelar" @click="$wire.modalEntry = false" class="btn-ghost" />
+            <x-mary-button type="submit" spinner="entryCaja" label="Registrar ingreso" class="btn-success text-white" />
+        </x-slot:actions>
     </x-mary-form>
 </x-mary-modal>
 
-<x-mary-modal wire:model="modalExit" persistent class="backdrop-blur" box-class="max-h-full max-w-128">
-    <x-mary-icon name="s-envelope" class="text-red-500 text-md" label="REGISTRO EGRESO" />
-    <x-mary-form wire:submit="exitCaja">
-        <div class="border border-red-500 rounded-lg">
-            <div class="grid grid-cols-1 p-2 space-x-2">
-                <div class="pt-2">
-                    <x-mary-select label="Tipo" :options="$tipos2" wire:model="exitForm.tipo_exit" />
-                </div>
-                <div class="pt-2">
-                    <x-mary-input label="Monto" wire:model="exitForm.monto_exit" suffix="S/" locale="es-PE" />
-                </div>
-                <div class="pt-2">
-                    <x-mary-input label="Descripción" wire:model="exitForm.description" />
-                </div>
-                <div>
-                    <x-mary-select label="Metodo pago" icon="o-user" :options="$metodoPagos"
-                    wire:model="exitForm.metodo_pago" class="rounded-r-lg" />
-                </div>
-            </div>
-            <x-slot:actions>
-                <x-mary-button label="Cancelar" @click="$wire.modalExit = false" class="bg-red-500" />
-                <x-mary-button type="submit" spinner="save3" label="Guardar" class="bg-blue-500" spinner="exitCaja" />
-            </x-slot:actions>
+{{-- Modal egreso --}}
+<x-mary-modal wire:model="modalExit" persistent class="backdrop-blur" box-class="max-w-md">
+    <div class="flex items-center gap-3 mb-4">
+        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-error/15 text-error">
+            <x-mary-icon name="o-arrow-up-circle" class="w-5 h-5" />
         </div>
+        <div>
+            <h3 class="font-bold text-lg">Registrar egreso</h3>
+            <p class="text-sm text-base-content/60">Salida de dinero de la caja</p>
+        </div>
+    </div>
+
+    <x-mary-form wire:submit="exitCaja">
+        <div class="space-y-3">
+            <x-mary-select label="Tipo" :options="$tipos2" wire:model="exitForm.tipo_exit" />
+            <x-mary-input label="Monto" wire:model="exitForm.monto_exit" prefix="S/." type="number" step="0.01" min="0" />
+            <x-mary-input label="Descripción" wire:model="exitForm.description" placeholder="Concepto del egreso" />
+            <x-mary-select label="Método de pago" icon="o-credit-card" :options="$metodoPagos" wire:model="exitForm.metodo_pago" />
+        </div>
+        <x-slot:actions>
+            <x-mary-button label="Cancelar" @click="$wire.modalExit = false" class="btn-ghost" />
+            <x-mary-button type="submit" spinner="exitCaja" label="Registrar egreso" class="btn-error text-white" />
+        </x-slot:actions>
     </x-mary-form>
 </x-mary-modal>

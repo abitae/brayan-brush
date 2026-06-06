@@ -23,6 +23,7 @@ trait CajaTrait
     function cajaListPaginate(User $user, $paginate)
     {
         return Caja::where('user_id', $user->id)
+            ->with(['entries', 'exits'])
             ->latest()->paginate($paginate);
     }
     /*

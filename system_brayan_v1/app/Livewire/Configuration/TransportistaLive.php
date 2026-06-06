@@ -17,54 +17,73 @@ class TransportistaLive extends Component
     public $title = 'CHOFERES';
     public $sub_title = 'Modulo de choferes';
     public int $perPage = 10;
-    public bool $modalTransportista = false;
     public function render()
     {
         $transportistas = Transportista::latest()->paginate($this->perPage);
+
         return view('livewire.configuration.transportista-live', compact('transportistas'));
     }
-    public function openModal()
+
+    public bool $modalTransportista = false;
+
+    public function openModal(): void
     {
         $this->transportistaForm->reset();
-        $this->modalTransportista = !$this->modalTransportista;
+        $this->modalTransportista = true;
     }
-    public function create()
+
+    public function openEditModal(Transportista $transportista): void
+    {
+        $this->transportistaForm->reset();
+        $this->transportistaForm->setTransportista($transportista);
+        $this->modalTransportista = true;
+    }
+
+    public function closeModal(): void
+    {
+        $this->modalTransportista = false;
+        $this->transportistaForm->reset();
+    }
+
+    public function create(): void
     {
         if ($this->transportistaForm->store()) {
-            $this->success('Genial, guardado correctamente!');
-        } else {
-            $this->error('Error, verifique los datos!');
+            $this->success('Chofer registrado correctamente');
+            $this->closeModal();
+            return;
         }
-        $this->openModal();
+
+        $this->error('No se pudo guardar. Verifique los datos (DNI y licencia deben ser únicos).');
     }
-    public function update(Transportista $Transportista)
-    {
-        $this->openModal();
-        $this->transportistaForm->setTransportista($Transportista);
-    }
-    public function edit()
+
+    public function edit(): void
     {
         if ($this->transportistaForm->update()) {
-            $this->success('Genial, guardado correctamente!');
-        } else {
-            $this->error('Error, verifique los datos!');
+            $this->success('Chofer actualizado correctamente');
+            $this->closeModal();
+            return;
         }
-        $this->openModal();
+
+        $this->error('No se pudo actualizar. Verifique los datos.');
     }
-    public function delete(Transportista $Transportista)
+
+    public function delete(Transportista $transportista): void
     {
-        if ($this->transportistaForm->delete($Transportista)) {
-            $this->success('Genial, guardado correctamente!');
-        } else {
-            $this->error('Error, verifique los datos!');
+        if ($this->transportistaForm->delete($transportista)) {
+            $this->success('Chofer eliminado correctamente');
+            return;
         }
+
+        $this->error('No se pudo eliminar el registro.');
     }
-    public function estado(Transportista $Transportista)
+
+    public function estado(Transportista $transportista): void
     {
-        if ($this->transportistaForm->estado($Transportista)) {
-            $this->success('Genial, guardado correctamente!');
-        } else {
-            $this->error('Error, verifique los datos!');
+        if ($this->transportistaForm->estado($transportista)) {
+            $this->success('Estado actualizado correctamente');
+            return;
         }
+
+        $this->error('No se pudo cambiar el estado.');
     }
 }

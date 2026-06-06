@@ -21,7 +21,9 @@ class ReportEncomiendaExport implements FromView, WithColumnWidths, WithStyles
     public function view(): View
     {
         return view('report.excel.reporte-encomienda', [
-            'encomiendas' => Encomienda::whereIn('id', $this->ids)->get(),
+            'encomiendas' => Encomienda::with(['remitente', 'destinatario', 'paquetes'])
+                ->whereIn('id', $this->ids)
+                ->get(),
         ]);
     }
     public function title(): string

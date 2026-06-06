@@ -5,6 +5,7 @@ namespace App\Livewire\Forms;
 use App\Models\Configuration\Transportista;
 use App\Traits\LogCustom;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
@@ -41,6 +42,8 @@ class TransportistaForm extends Form
             ]);
             $this->infoLog('Transportista store ' . Auth::user()->name);
             return true;
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             $this->errorLog('Transportista store', $e);
             return false;
@@ -59,6 +62,8 @@ class TransportistaForm extends Form
             ]);
             $this->infoLog('Transportista update ' . Auth::user()->name);
             return true;
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             $this->errorLog('Transportista update', $e);
             return false;

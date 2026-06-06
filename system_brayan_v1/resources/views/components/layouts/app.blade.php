@@ -27,49 +27,8 @@
 
 </head>
 
-<body class="min-h-screen font-sans antialiased bg-base-200/50 dark:bg-base-200">
-    <x-mary-nav sticky full-width>
-        <x-slot:brand>
-            {{-- Drawer toggle for "main-drawer" --}}
-            <label for="main-drawer" class="mr-3 lg:hidden">
-                <x-mary-icon name="o-bars-3" class="cursor-pointer" />
-            </label>
-
-            {{-- Brand --}}
-            <img src="{{ asset('img/logo01.png') }}" alt='Infinity.ut' class='invisible w-auto h-10 md:visible'>
-
-        </x-slot:brand>
-
-        {{-- Right side actions --}}
-        <x-slot:actions>
-            <x-mary-icon name="s-home" class="text-center text-green-500 text-md"
-                label="{{ auth()->user()->sucursal->name }}" />
-
-            <x-mary-theme-toggle darkTheme="business" lightTheme="light" />
-
-            <x-mary-button label="Messages" icon="o-envelope" link="/message" class="btn-ghost btn-sm" responsive />
-            <x-mary-button icon="o-bell" class="relative btn-circle" link="/message">
-                @php
-                $messages = App\Models\Frontend\Message::where('isActive', true)->get()->count();
-                @endphp
-                <x-mary-badge value="{{ $messages }}" class="absolute badge-error -right-2 -top-2" />
-            </x-mary-button>
-            <x-mary-dropdown>
-                <x-slot:trigger>
-                    <x-mary-button icon="o-user" class="relative" label="{{ auth()->user()->name }}" responsive
-                        no-wire-navigate />
-                </x-slot:trigger>
-                <x-mary-menu-item icon="o-user" title="Perfil" :href="route('profile.edit')" />
-                @if ($user = auth()->user())
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <x-mary-menu-item icon="o-power" title="Cerrar" :href="route('logout')" onclick="event.preventDefault();
-                                                this.closest('form').submit();" />
-                </form>
-                @endif
-            </x-mary-dropdown>
-        </x-slot:actions>
-    </x-mary-nav>
+<body class="min-h-screen font-sans antialiased bg-base-200/40">
+    @include('components.partials.header')
     @include('components.partials.sidebar')
     <x-mary-toast />
     <x-mary-spotlight />

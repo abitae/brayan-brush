@@ -36,9 +36,9 @@
                             NINGUNO
                         @endif
                     </td>
-                    <td>{{ $encomiendaLibre->remitente->name ?? '' }}</td>
-                    <td>{{ $encomiendaLibre->remitente->phone ?? '' }}</td>
                     <td>{{ $encomiendaLibre->destinatario->name ?? '' }}</td>
+                    <td>{{ $encomiendaLibre->destinatario->phone ?? '' }}</td>
+                    <td>{{ $encomiendaLibre->remitente->name ?? '' }}</td>
                     <td>{{ $encomiendaLibre->cantidad }}</td>
                     <td>
                         @php
@@ -51,13 +51,12 @@
                     </td>
                     <td>{{ $encomiendaLibre->monto }}</td>
                     <td>{{ $encomiendaLibre->monto_descuento }}</td>
-                    <td>{{ $encomiendaLibre->isReturn ? 'SI' : 'NO' }}</td>
-                    <td>{{ $encomiendaLibre->estado_pago}}</td>
-                    <td>{{ $encomiendaLibre->tipo_pago }}</td>
-                    <td>{{ $encomiendaLibre->tipo_comprobante }}</td>
                     <td>{{ $encomiendaLibre->metodo_pago ?? 'CONTADO' }}</td>
                     <td>{{ $encomiendaLibre->tipo_comprobante ?? 'NINGUNO' }}</td>
-
+                    <td>{{ $encomiendaLibre->isReturn ? 'SI' : 'NO' }}</td>
+                    <td>{{ $encomiendaLibre->isHome ? 'DOMICILIO' : 'AGENCIA' }}</td>
+                    <td>{{ $encomiendaLibre->estado_credito ?? '' }}</td>
+                    <td>{{ $encomiendaLibre->destinatario->code ?? '' }}</td>
                     <td>{{ $encomiendaLibre->fecha_creacion }}</td>
                     <td>{{ $encomiendaLibre->fecha_entrega }}</td>
                 </tr>

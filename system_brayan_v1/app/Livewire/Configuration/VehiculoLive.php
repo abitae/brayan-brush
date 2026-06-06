@@ -13,58 +13,82 @@ class VehiculoLive extends Component
 {
     use Toast;
     use WithPagination, WithoutUrlPagination;
+
     public VehiculoForm $vehiculoForm;
-    public $title = 'Vehiculos';
-    public $sub_title = 'Modulo de vehiculos';
+
+    public $title = 'Vehículos';
+
+    public $sub_title = 'Módulo de vehículos';
+
     public int $perPage = 10;
+
     public bool $modalVehiculo = false;
+
     public function render()
     {
         $vehiculos = Vehiculo::latest()->paginate($this->perPage);
-        return view('livewire.configuration.vehiculo-live',compact('vehiculos'));
+
+        return view('livewire.configuration.vehiculo-live', compact('vehiculos'));
     }
-    public function openModal()
+
+    public function openModal(): void
     {
         $this->vehiculoForm->reset();
-        $this->modalVehiculo = !$this->modalVehiculo;
+        $this->modalVehiculo = true;
     }
-    public function create()
+
+    public function openEditModal(Vehiculo $vehiculo): void
+    {
+        $this->vehiculoForm->reset();
+        $this->vehiculoForm->setVehiculo($vehiculo);
+        $this->modalVehiculo = true;
+    }
+
+    public function closeModal(): void
+    {
+        $this->modalVehiculo = false;
+        $this->vehiculoForm->reset();
+    }
+
+    public function create(): void
     {
         if ($this->vehiculoForm->store()) {
-            $this->success('Genial, guardado correctamente!');
-        } else {
-            $this->error('Error, verifique los datos!');
+            $this->success('Vehículo registrado correctamente');
+            $this->closeModal();
+            return;
         }
-        $this->openModal();
+
+        $this->error('No se pudo guardar. Verifique los datos (la placa debe ser única).');
     }
-    public function update(Vehiculo $Vehiculo)
-    {
-        $this->openModal();
-        $this->vehiculoForm->setVehiculo($Vehiculo);
-    }
-    public function edit()
+
+    public function edit(): void
     {
         if ($this->vehiculoForm->update()) {
-            $this->success('Genial, guardado correctamente!');
-        } else {
-            $this->error('Error, verifique los datos!');
+            $this->success('Vehículo actualizado correctamente');
+            $this->closeModal();
+            return;
         }
-        $this->openModal();
+
+        $this->error('No se pudo actualizar. Verifique los datos.');
     }
-    public function delete(Vehiculo $Vehiculo)
+
+    public function delete(Vehiculo $vehiculo): void
     {
-        if ($this->vehiculoForm->delete($Vehiculo)) {
-            $this->success('Genial, guardado correctamente!');
-        } else {
-            $this->error('Error, verifique los datos!');
+        if ($this->vehiculoForm->delete($vehiculo)) {
+            $this->success('Vehículo eliminado correctamente');
+            return;
         }
+
+        $this->error('No se pudo eliminar el registro.');
     }
-    public function estado(Vehiculo $Vehiculo)
+
+    public function estado(Vehiculo $vehiculo): void
     {
-        if ($this->vehiculoForm->estado($Vehiculo)) {
-            $this->success('Genial, guardado correctamente!');
-        } else {
-            $this->error('Error, verifique los datos!');
+        if ($this->vehiculoForm->estado($vehiculo)) {
+            $this->success('Estado actualizado correctamente');
+            return;
         }
+
+        $this->error('No se pudo cambiar el estado.');
     }
 }

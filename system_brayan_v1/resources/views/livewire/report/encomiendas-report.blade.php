@@ -21,7 +21,7 @@
             </div>
             <div>
                 <x-mary-select label="Sucursal" icon="s-inbox-stack" :options="$sucursals"
-                    wire:model.live="filtroSucursal" />
+                    wire:model.live="filtroSucursal" :disabled="$soloSucursalUsuario ?? false" />
             </div>
             <div>
                 <x-mary-select label="Estado" icon="s-inbox-stack" :options="$estados"

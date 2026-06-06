@@ -8,6 +8,7 @@ use App\Models\Package\Encomienda;
 use App\Traits\UtilsTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
@@ -50,6 +51,8 @@ class EncomiendasReport extends Component
     public ?string $filtroMetodoPago = null;
     public int $perPage = self::DEFAULT_PER_PAGE;
 
+    public bool $soloSucursalUsuario = false;
+
     // Propiedades para la interfaz
     public bool $showDrawer = false;
     public array $ids = [];
@@ -63,6 +66,12 @@ class EncomiendasReport extends Component
     public function mount(): void
     {
         $this->resetFilters();
+
+        $user = Auth::user();
+        if ($user && ! $this->canViewAllSucursales()) {
+            $this->filtroSucursal = $user->sucursal_id;
+            $this->soloSucursalUsuario = true;
+        }
     }
 
     /**
@@ -77,8 +86,11 @@ class EncomiendasReport extends Component
         $this->FiltroEstadoEncomienda = null;
         $this->FiltroEstadoPago = null;
         $this->filtroMetodoPago = null;
-        $this->filtroSucursal = null;
         $this->search = null;
+
+        if (! $this->soloSucursalUsuario) {
+            $this->filtroSucursal = null;
+        }
     }
 
     /**
@@ -98,7 +110,15 @@ class EncomiendasReport extends Component
             'estadosPago' => self::ESTADOS_PAGO,
             'metodosPago' => self::METODOS_PAGO,
             'totalRegistros' => $encomiendas->count(),
+            'soloSucursalUsuario' => $this->soloSucursalUsuario,
         ]);
+    }
+
+    private function canViewAllSucursales(): bool
+    {
+        $user = Auth::user();
+
+        return $user?->hasRole(['SuperAdmin', 'Administrador']) ?? false;
     }
 
     /**

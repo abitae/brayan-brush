@@ -15,7 +15,7 @@ use Carbon\Carbon;
 use Livewire\Component;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
-use Maatwebsite\Excel\Excel;
+use Maatwebsite\Excel\Facades\Excel;
 use Mary\Traits\Toast;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;

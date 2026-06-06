@@ -5,6 +5,7 @@ namespace App\Livewire\Forms;
 use App\Models\Configuration\Vehiculo;
 use App\Traits\LogCustom;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
@@ -51,6 +52,8 @@ class VehiculoForm extends Form
             ]);
             $this->infoLog('Vehiculo store ' . Auth::user()->name);
             return true;
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             $this->errorLog('Vehiculo store', $e);
             return false;
@@ -71,6 +74,8 @@ class VehiculoForm extends Form
             ]);
             $this->infoLog('Vehiculo update ' . Auth::user()->name);
             return true;
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             $this->errorLog('Vehiculo update', $e);
             return false;
