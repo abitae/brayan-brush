@@ -2,6 +2,7 @@ import { Head } from '@inertiajs/react';
 import BrayanBrushLayout from '@/layouts/brayan-brush-layout';
 import AdminDashboard from '@/components/brayan-brush/AdminDashboard';
 import type {
+  CalculatorCityItem,
   PricingRouteItem,
   ProhibitedCategoryAdmin,
   QuoteItem,
@@ -15,9 +16,17 @@ interface AdminProps {
   prohibitedCategories: ProhibitedCategoryAdmin[];
   quotes: QuoteItem[];
   pricingRoutes: PricingRouteItem[];
+  calculatorCities: CalculatorCityItem[];
 }
 
-export default function Admin({ config, services, prohibitedCategories, quotes, pricingRoutes }: AdminProps) {
+export default function Admin({
+  config,
+  services,
+  prohibitedCategories,
+  quotes,
+  pricingRoutes,
+  calculatorCities,
+}: AdminProps) {
   return (
     <BrayanBrushLayout>
       <Head title="Panel Administrativo - Brayan Brush" />
@@ -27,6 +36,7 @@ export default function Admin({ config, services, prohibitedCategories, quotes, 
         prohibitedCategories={prohibitedCategories}
         quotes={quotes}
         pricingRoutes={pricingRoutes}
+        calculatorCities={calculatorCities}
       />
     </BrayanBrushLayout>
   );

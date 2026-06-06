@@ -84,6 +84,12 @@ export interface SiteConfig {
   calculator_default_length?: number;
   calculator_default_width?: number;
   calculator_default_height?: number;
+  calculator_base_fee?: number;
+  calculator_included_kg?: number;
+  calculator_excess_price_per_kg?: number;
+  calculator_express_multiplier?: number;
+  calculator_default_origin?: string | null;
+  calculator_default_destination?: string | null;
   recaptcha_site_key?: string | null;
 }
 
@@ -94,6 +100,8 @@ export interface TrackingResult {
   current_location: string | null;
   origin: string;
   destination: string;
+  name_origen?: string | null;
+  name_destino?: string | null;
   estimated_delivery: string | null;
   progress: number;
   history: { date: string; location: string; desc: string }[];
@@ -104,19 +112,16 @@ export interface TrackingResult {
 const TRACKING_404_MESSAGE = 'Encomienda no encontrada.';
 const TRACKING_5XX_MESSAGE = 'Error al consultar el seguimiento. Intenta de nuevo.';
 
-export async function getTracking(code: string, captchaToken: string): Promise<TrackingResult> {
-  const url = `${API_BASE}/api/tracking`;
-  const csrf = getCsrfToken();
-  const headers: Record<string, string> = {
-    Accept: 'application/json',
-    'Content-Type': 'application/json',
-  };
-  if (csrf) headers['X-XSRF-TOKEN'] = csrf;
+export async function getTracking(code: string, document: string): Promise<TrackingResult> {
+  const params = new URLSearchParams({
+    code: code.trim(),
+    document: document.trim(),
+  });
+  const url = `${API_BASE}/api/tracking?${params.toString()}`;
   const res = await fetch(url, {
-    method: 'POST',
+    method: 'GET',
     credentials: 'include',
-    headers,
-    body: JSON.stringify({ code: code.trim(), captcha_token: captchaToken }),
+    headers: { Accept: 'application/json' },
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ message: res.statusText }));
@@ -216,6 +221,7 @@ export interface PricingRouteItem {
   origin: string;
   destination: string;
   base_fee: number;
+  included_kg: number;
   price_per_kg: number;
   volumetric_factor: number;
 }
@@ -228,6 +234,7 @@ export async function createPricingRoute(data: {
   origin: string;
   destination: string;
   base_fee?: number;
+  included_kg?: number;
   price_per_kg: number;
   volumetric_factor?: number;
 }): Promise<PricingRouteItem> {
@@ -236,13 +243,48 @@ export async function createPricingRoute(data: {
 
 export async function updatePricingRoute(
   id: number,
-  data: { origin?: string; destination?: string; base_fee?: number; price_per_kg?: number; volumetric_factor?: number }
+  data: { origin?: string; destination?: string; base_fee?: number; included_kg?: number; price_per_kg?: number; volumetric_factor?: number }
 ): Promise<PricingRouteItem> {
   return fetchApi<PricingRouteItem>(`/api/pricing-routes/${id}`, { method: 'PUT', body: JSON.stringify(data) });
 }
 
 export async function deletePricingRoute(id: number): Promise<{ message: string }> {
   return fetchApi<{ message: string }>(`/api/pricing-routes/${id}`, { method: 'DELETE' });
+}
+
+// --- Ciudades del cotizador ---
+export interface CalculatorCityItem {
+  id: number;
+  name: string;
+  can_origin: boolean;
+  can_destination: boolean;
+  is_active?: boolean;
+  sort_order?: number;
+}
+
+export async function getCalculatorCities(): Promise<CalculatorCityItem[]> {
+  return fetchApi<CalculatorCityItem[]>('/api/calculator-cities');
+}
+
+export async function createCalculatorCity(data: {
+  name: string;
+  can_origin?: boolean;
+  can_destination?: boolean;
+  is_active?: boolean;
+  sort_order?: number;
+}): Promise<CalculatorCityItem> {
+  return fetchApi<CalculatorCityItem>('/api/calculator-cities', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function updateCalculatorCity(
+  id: number,
+  data: { name?: string; can_origin?: boolean; can_destination?: boolean; is_active?: boolean; sort_order?: number }
+): Promise<CalculatorCityItem> {
+  return fetchApi<CalculatorCityItem>(`/api/calculator-cities/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export async function deleteCalculatorCity(id: number): Promise<{ message: string }> {
+  return fetchApi<{ message: string }>(`/api/calculator-cities/${id}`, { method: 'DELETE' });
 }
 
 // --- Prohibiciones (admin) ---

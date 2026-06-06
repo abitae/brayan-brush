@@ -48,4 +48,9 @@ return [
         'secret_key' => env('RECAPTCHA_SECRET_KEY'),
     ],
 
+    'system_brayan' => [
+        'tracking_api_url' => env('SYSTEM_BRAYAN_TRACKING_API_URL'),
+        'verify_ssl' => env('SYSTEM_BRAYAN_TRACKING_VERIFY_SSL', true),
+    ],
+
 ];

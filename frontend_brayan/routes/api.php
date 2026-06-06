@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\CalculatorCityController;
 use App\Http\Controllers\Api\AssistantController;
 use App\Http\Controllers\Api\ConfigController;
 use App\Http\Controllers\Api\PricingRouteController;
@@ -14,6 +15,7 @@ Route::get('/config', [ConfigController::class, 'index']);
 Route::get('/services', [ServiceController::class, 'index']);
 Route::get('/prohibited-categories', [ProhibitedCategoryController::class, 'index']);
 Route::get('/pricing-routes', [PricingRouteController::class, 'index']);
+Route::get('/calculator-cities', [CalculatorCityController::class, 'index']);
 Route::get('/tracking', [TrackingController::class, 'show']);
 Route::post('/tracking', [TrackingController::class, 'store']);
 
@@ -34,6 +36,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/pricing-routes', [PricingRouteController::class, 'store']);
     Route::put('/pricing-routes/{pricingRoute}', [PricingRouteController::class, 'update']);
     Route::delete('/pricing-routes/{pricingRoute}', [PricingRouteController::class, 'destroy']);
+
+    Route::post('/calculator-cities', [CalculatorCityController::class, 'store']);
+    Route::put('/calculator-cities/{calculatorCity}', [CalculatorCityController::class, 'update']);
+    Route::delete('/calculator-cities/{calculatorCity}', [CalculatorCityController::class, 'destroy']);
 
     Route::post('/prohibited-categories', [ProhibitedCategoryController::class, 'store']);
     Route::put('/prohibited-categories/{prohibitedCategory}', [ProhibitedCategoryController::class, 'update']);

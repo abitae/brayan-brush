@@ -2,6 +2,7 @@ import ConfigController from './ConfigController'
 import ServiceController from './ServiceController'
 import ProhibitedCategoryController from './ProhibitedCategoryController'
 import PricingRouteController from './PricingRouteController'
+import CalculatorCityController from './CalculatorCityController'
 import TrackingController from './TrackingController'
 import AssistantController from './AssistantController'
 import QuoteController from './QuoteController'
@@ -11,6 +12,7 @@ const Api = {
 ServiceController: Object.assign(ServiceController, ServiceController),
 ProhibitedCategoryController: Object.assign(ProhibitedCategoryController, ProhibitedCategoryController),
 PricingRouteController: Object.assign(PricingRouteController, PricingRouteController),
+CalculatorCityController: Object.assign(CalculatorCityController, CalculatorCityController),
 TrackingController: Object.assign(TrackingController, TrackingController),
 AssistantController: Object.assign(AssistantController, AssistantController),
 QuoteController: Object.assign(QuoteController, QuoteController),

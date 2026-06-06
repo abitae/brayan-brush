@@ -8,20 +8,22 @@ import {
   LogOut,
   Palette,
   Receipt,
-  Route,
   Wrench,
 } from 'lucide-react';
 import { logout } from '@/routes';
 import {
+  createCalculatorCity,
   createPricingRoute,
   createProhibitedCategory,
   createProhibitedItem,
   createService,
+  deleteCalculatorCity,
   deletePricingRoute,
   deleteProhibitedCategory,
   deleteProhibitedItem,
   deleteQuote,
   deleteService,
+  updateCalculatorCity,
   updateConfig,
   updatePricingRoute,
   updateProhibitedCategory,
@@ -34,6 +36,7 @@ import {
   uploadServiceImage,
 } from '@/api/brayan-api';
 import type {
+  CalculatorCityItem,
   PricingRouteItem,
   ProhibitedCategoryAdmin,
   QuoteItem,
@@ -49,6 +52,7 @@ interface AdminDashboardProps {
   prohibitedCategories: ProhibitedCategoryAdmin[];
   quotes: QuoteItem[];
   pricingRoutes: PricingRouteItem[];
+  calculatorCities: CalculatorCityItem[];
 }
 
 export default function AdminDashboard({
@@ -57,15 +61,26 @@ export default function AdminDashboard({
   prohibitedCategories: initialProhibited,
   quotes: initialQuotes,
   pricingRoutes: initialPricingRoutes,
+  calculatorCities: initialCalculatorCities,
 }: AdminDashboardProps) {
   const [activeTab, setActiveTab] = useState('branding');
+  const [cotizadorSubTab, setCotizadorSubTab] = useState<'ciudades' | 'tarifas' | 'general'>('ciudades');
   const [localConfig, setLocalConfig] = useState(config);
   const [localServices, setLocalServices] = useState<ServiceItem[]>(initialServices);
   const [localProhibited, setLocalProhibited] = useState<ProhibitedCategoryAdmin[]>(initialProhibited);
   const [localQuotes, setLocalQuotes] = useState<QuoteItem[]>(initialQuotes);
   const [localPricingRoutes, setLocalPricingRoutes] = useState<PricingRouteItem[]>(initialPricingRoutes);
+  const [localCalculatorCities, setLocalCalculatorCities] = useState<CalculatorCityItem[]>(initialCalculatorCities);
   const [uploading, setUploading] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [newCity, setNewCity] = useState({
+    name: '',
+    can_origin: true,
+    can_destination: true,
+    is_active: true,
+    sort_order: 0,
+  });
+  const [editingCityId, setEditingCityId] = useState<number | null>(null);
 
   // Formulario nuevo servicio
   const [newService, setNewService] = useState({ title: '', description: '', icon_type: 'Box' as const });
@@ -77,7 +92,8 @@ export default function AdminDashboard({
     origin: '',
     destination: '',
     base_fee: 25,
-    price_per_kg: 1.5,
+    included_kg: 5,
+    price_per_kg: 1.4,
     volumetric_factor: 5000,
   });
   const [editingPricingId, setEditingPricingId] = useState<number | null>(null);
@@ -99,6 +115,12 @@ export default function AdminDashboard({
   useEffect(() => {
     setLocalPricingRoutes(initialPricingRoutes);
   }, [initialPricingRoutes]);
+  useEffect(() => {
+    setLocalCalculatorCities(initialCalculatorCities);
+  }, [initialCalculatorCities]);
+
+  const activeOriginCities = localCalculatorCities.filter((c) => c.is_active !== false && c.can_origin);
+  const activeDestinationCities = localCalculatorCities.filter((c) => c.is_active !== false && c.can_destination);
 
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -127,6 +149,38 @@ export default function AdminDashboard({
     try {
       await updateConfig(localConfig);
       Swal.fire({ icon: 'success', text: 'Configuración guardada.', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false });
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al guardar.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveCalculatorConfig = async () => {
+    setSaving(true);
+    try {
+      await updateConfig({
+        ...localConfig,
+        calculator_default_mode: localConfig.calculator_default_mode ?? 'weight',
+        calculator_default_weight: localConfig.calculator_default_weight ?? 5,
+        calculator_default_length: localConfig.calculator_default_length ?? 30,
+        calculator_default_width: localConfig.calculator_default_width ?? 30,
+        calculator_default_height: localConfig.calculator_default_height ?? 30,
+        calculator_base_fee: localConfig.calculator_base_fee ?? 25,
+        calculator_included_kg: localConfig.calculator_included_kg ?? 5,
+        calculator_excess_price_per_kg: localConfig.calculator_excess_price_per_kg ?? 1.4,
+        calculator_express_multiplier: localConfig.calculator_express_multiplier ?? 1.5,
+        calculator_default_origin: localConfig.calculator_default_origin ?? activeOriginCities[0]?.name ?? null,
+        calculator_default_destination: localConfig.calculator_default_destination ?? activeDestinationCities[0]?.name ?? null,
+      });
+      Swal.fire({
+        icon: 'success',
+        text: 'Configuración del cotizador guardada.',
+        toast: true,
+        position: 'top-end',
+        timer: 3000,
+        showConfirmButton: false,
+      });
     } catch (err) {
       Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al guardar.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     } finally {
@@ -212,6 +266,48 @@ export default function AdminDashboard({
     e.target.value = '';
   };
 
+  // --- Ciudades del cotizador ---
+  const handleCreateCity = async () => {
+    if (!newCity.name.trim()) return;
+    try {
+      const created = await createCalculatorCity({
+        name: newCity.name.trim(),
+        can_origin: newCity.can_origin,
+        can_destination: newCity.can_destination,
+        is_active: newCity.is_active,
+        sort_order: newCity.sort_order,
+      });
+      setLocalCalculatorCities((prev) => [...prev, created].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)));
+      setNewCity({ name: '', can_origin: true, can_destination: true, is_active: true, sort_order: 0 });
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al crear ciudad.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
+    }
+  };
+
+  const handleUpdateCity = async (
+    id: number,
+    data: { name?: string; can_origin?: boolean; can_destination?: boolean; is_active?: boolean; sort_order?: number }
+  ) => {
+    try {
+      const updated = await updateCalculatorCity(id, data);
+      setLocalCalculatorCities((prev) => prev.map((c) => (c.id === id ? updated : c)));
+      setEditingCityId(null);
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al actualizar ciudad.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
+    }
+  };
+
+  const handleDeleteCity = async (id: number) => {
+    const res = await Swal.fire({ title: '¿Eliminar ciudad?', text: 'Las rutas que usen esta ciudad conservarán el nombre.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí', cancelButtonText: 'No' });
+    if (!res.isConfirmed) return;
+    try {
+      await deleteCalculatorCity(id);
+      setLocalCalculatorCities((prev) => prev.filter((c) => c.id !== id));
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al eliminar.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
+    }
+  };
+
   // --- Precios CRUD ---
   const handleCreatePricingRoute = async () => {
     if (!newPricingRoute.origin.trim() || !newPricingRoute.destination.trim()) return;
@@ -220,11 +316,12 @@ export default function AdminDashboard({
         origin: newPricingRoute.origin.trim(),
         destination: newPricingRoute.destination.trim(),
         base_fee: newPricingRoute.base_fee,
+        included_kg: newPricingRoute.included_kg,
         price_per_kg: newPricingRoute.price_per_kg,
         volumetric_factor: newPricingRoute.volumetric_factor,
       });
       setLocalPricingRoutes((prev) => [...prev, created]);
-      setNewPricingRoute({ origin: '', destination: '', base_fee: 25, price_per_kg: 1.5, volumetric_factor: 5000 });
+      setNewPricingRoute({ origin: '', destination: '', base_fee: 25, included_kg: 5, price_per_kg: 1.4, volumetric_factor: 5000 });
     } catch (err) {
       Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al crear ruta.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     }
@@ -232,7 +329,7 @@ export default function AdminDashboard({
 
   const handleUpdatePricingRoute = async (
     id: number,
-    data: { origin?: string; destination?: string; base_fee?: number; price_per_kg?: number; volumetric_factor?: number }
+    data: { origin?: string; destination?: string; base_fee?: number; included_kg?: number; price_per_kg?: number; volumetric_factor?: number }
   ) => {
     try {
       const updated = await updatePricingRoute(id, data);
@@ -387,7 +484,6 @@ export default function AdminDashboard({
                 Comercial
               </span>
               {[
-                { id: 'precios', label: 'Precios por ruta', Icon: Route },
                 { id: 'cotizador', label: 'Cotizador', Icon: FileText },
                 { id: 'cotizaciones', label: 'Solicitudes de cotización', Icon: Receipt },
               ].map((tab) => {
@@ -553,11 +649,12 @@ export default function AdminDashboard({
                       type="url"
                       value={localConfig.tracking_api_url ?? ''}
                       onChange={(e) => setLocalConfig({ ...localConfig, tracking_api_url: e.target.value || null })}
-                      placeholder="https://system_brayan.test/api/frontend/tracking"
+                      placeholder="https://system_brayan_v1.test/api/frontend/tracking"
                       className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-emerald-500 outline-none"
                     />
                     <p className="text-[10px] text-slate-500 mt-1">
-                      Si está vacío, se usan datos de prueba. El servicio debe aceptar GET con ?codigo=XXX.
+                      Si está vacío, se usa SYSTEM_BRAYAN_TRACKING_API_URL del .env. El servicio debe aceptar GET con
+                      ?code=XXX&amp;document=YYY.
                     </p>
                   </div>
                 </div>
@@ -679,108 +776,6 @@ export default function AdminDashboard({
               </div>
             )}
 
-            {activeTab === 'precios' && (
-              <div className="space-y-8">
-                <h3 className="text-2xl font-black">Precios por peso y medidas (origen – destino)</h3>
-                <p className="text-sm text-slate-600">
-                  Configura tarifas por ruta. El cotizador usa: costo = cuota_base + (peso_cobrado × precio_por_kg).
-                  Peso cobrado = máximo entre peso real y peso volumétrico (L×A×H / factor).
-                </p>
-                <div className="grid gap-4">
-                  {localPricingRoutes.map((r) => (
-                    <div key={r.id} className="bg-slate-50 p-6 rounded-3xl border border-slate-200">
-                      {editingPricingId === r.id ? (
-                        <PricingRouteEditForm
-                          route={r}
-                          onSave={(data) => handleUpdatePricingRoute(r.id, data)}
-                          onCancel={() => setEditingPricingId(null)}
-                        />
-                      ) : (
-                        <div className="flex justify-between items-center flex-wrap gap-4">
-                          <div>
-                            <p className="font-bold text-lg">
-                              {r.origin} → {r.destination}
-                            </p>
-                            <p className="text-xs text-slate-600 mt-1">
-                              Cuota base: S/ {r.base_fee} · S/ {r.price_per_kg}/kg · Factor vol.: {r.volumetric_factor}
-                            </p>
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              onClick={() => setEditingPricingId(r.id)}
-                              className="text-xs font-bold text-emerald-400 hover:underline"
-                            >
-                              Editar
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeletePricingRoute(r.id)}
-                              className="text-xs font-bold text-rose-400 hover:underline"
-                            >
-                              Eliminar
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <div className="bg-slate-50 p-6 rounded-3xl border border-dashed border-slate-200">
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Nueva ruta de precio</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                    <input
-                      type="text"
-                      value={newPricingRoute.origin}
-                      onChange={(e) => setNewPricingRoute((p) => ({ ...p, origin: e.target.value }))}
-                      placeholder="Origen (ej. Lima)"
-                      className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                    <input
-                      type="text"
-                      value={newPricingRoute.destination}
-                      onChange={(e) => setNewPricingRoute((p) => ({ ...p, destination: e.target.value }))}
-                      placeholder="Destino (ej. Arequipa)"
-                      className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={newPricingRoute.base_fee}
-                      onChange={(e) => setNewPricingRoute((p) => ({ ...p, base_fee: parseFloat(e.target.value) || 0 }))}
-                      placeholder="Cuota base"
-                      className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                    <input
-                      type="number"
-                      step="0.0001"
-                      min="0"
-                      value={newPricingRoute.price_per_kg}
-                      onChange={(e) => setNewPricingRoute((p) => ({ ...p, price_per_kg: parseFloat(e.target.value) || 0 }))}
-                      placeholder="S/ por kg"
-                      className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                    <input
-                      type="number"
-                      min="100"
-                      value={newPricingRoute.volumetric_factor}
-                      onChange={(e) => setNewPricingRoute((p) => ({ ...p, volumetric_factor: parseInt(e.target.value, 10) || 5000 }))}
-                      placeholder="Factor vol."
-                      className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleCreatePricingRoute}
-                    className="mt-4 bg-emerald-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-emerald-500"
-                  >
-                    Agregar ruta
-                  </button>
-                </div>
-              </div>
-            )}
-
             {activeTab === 'prohibiciones' && (
               <div className="space-y-10">
                 <h3 className="text-2xl font-black">Editor de Artículos Prohibidos</h3>
@@ -854,10 +849,290 @@ export default function AdminDashboard({
 
             {activeTab === 'cotizador' && (
               <div className="space-y-8">
-                <h3 className="text-2xl font-black">Configuración del cotizador (peso o volumen)</h3>
+                <div>
+                  <h3 className="text-2xl font-black">Cotizador — ciudades, tarifas y preferencias</h3>
+                  <p className="text-sm text-slate-600 mt-2">
+                    Administra las ciudades visibles en <strong>/cotizar</strong>, las tarifas por ruta y los valores por defecto del formulario.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2 p-1 bg-slate-100 rounded-2xl w-fit">
+                  {([
+                    { id: 'ciudades' as const, label: 'Ciudades' },
+                    { id: 'tarifas' as const, label: 'Tarifas por ruta' },
+                    { id: 'general' as const, label: 'Preferencias' },
+                  ]).map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setCotizadorSubTab(tab.id)}
+                      className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                        cotizadorSubTab === tab.id ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                {cotizadorSubTab === 'ciudades' && (
+                  <div className="space-y-6">
+                    <p className="text-sm text-slate-600">
+                      Define qué ciudades aparecen como origen y/o destino en el cotizador público.
+                    </p>
+                    <div className="overflow-x-auto rounded-3xl border border-slate-200">
+                      <table className="w-full text-sm">
+                        <thead className="bg-slate-50 text-left">
+                          <tr>
+                            <th className="px-4 py-3 font-bold text-slate-600">Ciudad</th>
+                            <th className="px-4 py-3 font-bold text-slate-600">Origen</th>
+                            <th className="px-4 py-3 font-bold text-slate-600">Destino</th>
+                            <th className="px-4 py-3 font-bold text-slate-600">Activa</th>
+                            <th className="px-4 py-3 font-bold text-slate-600">Orden</th>
+                            <th className="px-4 py-3 font-bold text-slate-600">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {localCalculatorCities.map((city) => (
+                            <tr key={city.id} className="border-t border-slate-100">
+                              {editingCityId === city.id ? (
+                                <CityEditRow
+                                  city={city}
+                                  onSave={(data) => handleUpdateCity(city.id, data)}
+                                  onCancel={() => setEditingCityId(null)}
+                                />
+                              ) : (
+                                <>
+                                  <td className="px-4 py-3 font-bold">{city.name}</td>
+                                  <td className="px-4 py-3">{city.can_origin ? 'Sí' : '—'}</td>
+                                  <td className="px-4 py-3">{city.can_destination ? 'Sí' : '—'}</td>
+                                  <td className="px-4 py-3">{city.is_active !== false ? 'Sí' : 'No'}</td>
+                                  <td className="px-4 py-3">{city.sort_order ?? 0}</td>
+                                  <td className="px-4 py-3">
+                                    <div className="flex gap-2">
+                                      <button type="button" onClick={() => setEditingCityId(city.id)} className="text-xs font-bold text-emerald-600 hover:underline">Editar</button>
+                                      <button type="button" onClick={() => handleDeleteCity(city.id)} className="text-xs font-bold text-rose-500 hover:underline">Eliminar</button>
+                                    </div>
+                                  </td>
+                                </>
+                              )}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="bg-slate-50 p-6 rounded-3xl border border-dashed border-slate-200 space-y-4">
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Nueva ciudad</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <input
+                          type="text"
+                          value={newCity.name}
+                          onChange={(e) => setNewCity((c) => ({ ...c, name: e.target.value }))}
+                          placeholder="Nombre (ej. Lima)"
+                          className="bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                        <label className="flex items-center gap-2 text-sm font-medium">
+                          <input type="checkbox" checked={newCity.can_origin} onChange={(e) => setNewCity((c) => ({ ...c, can_origin: e.target.checked }))} />
+                          Origen
+                        </label>
+                        <label className="flex items-center gap-2 text-sm font-medium">
+                          <input type="checkbox" checked={newCity.can_destination} onChange={(e) => setNewCity((c) => ({ ...c, can_destination: e.target.checked }))} />
+                          Destino
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={newCity.sort_order}
+                          onChange={(e) => setNewCity((c) => ({ ...c, sort_order: parseInt(e.target.value, 10) || 0 }))}
+                          placeholder="Orden"
+                          className="bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                      </div>
+                      <button type="button" onClick={handleCreateCity} className="bg-emerald-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-emerald-500">
+                        Agregar ciudad
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {cotizadorSubTab === 'tarifas' && (
+                  <div className="space-y-8">
+                    <p className="text-sm text-slate-600">
+                      Fórmula: <strong>total = (monto inicial + exceso × S/kg) × express</strong>. Configure una tarifa por cada par origen → destino.
+                    </p>
+                    {activeOriginCities.length === 0 || activeDestinationCities.length === 0 ? (
+                      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                        Agregue ciudades de origen y destino en la pestaña Ciudades antes de crear tarifas.
+                      </div>
+                    ) : null}
+                    <div className="grid gap-4">
+                      {localPricingRoutes.map((r) => (
+                        <div key={r.id} className="bg-slate-50 p-6 rounded-3xl border border-slate-200">
+                          {editingPricingId === r.id ? (
+                            <PricingRouteEditForm
+                              route={r}
+                              originCities={activeOriginCities}
+                              destinationCities={activeDestinationCities}
+                              onSave={(data) => handleUpdatePricingRoute(r.id, data)}
+                              onCancel={() => setEditingPricingId(null)}
+                            />
+                          ) : (
+                            <div className="flex justify-between items-center flex-wrap gap-4">
+                              <div>
+                                <p className="font-bold text-lg">{r.origin} → {r.destination}</p>
+                                <p className="text-xs text-slate-600 mt-1">
+                                  Monto inicial: S/ {r.base_fee} · Incluye {r.included_kg ?? 5} kg · Exceso: S/ {r.price_per_kg}/kg · Factor vol.: {r.volumetric_factor}
+                                </p>
+                              </div>
+                              <div className="flex gap-2">
+                                <button type="button" onClick={() => setEditingPricingId(r.id)} className="text-xs font-bold text-emerald-600 hover:underline">Editar</button>
+                                <button type="button" onClick={() => handleDeletePricingRoute(r.id)} className="text-xs font-bold text-rose-500 hover:underline">Eliminar</button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="bg-slate-50 p-6 rounded-3xl border border-dashed border-slate-200">
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Nueva ruta de precio</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <select
+                          value={newPricingRoute.origin}
+                          onChange={(e) => setNewPricingRoute((p) => ({ ...p, origin: e.target.value }))}
+                          className="bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
+                        >
+                          <option value="">Origen</option>
+                          {activeOriginCities.map((c) => (
+                            <option key={c.id} value={c.name}>{c.name}</option>
+                          ))}
+                        </select>
+                        <select
+                          value={newPricingRoute.destination}
+                          onChange={(e) => setNewPricingRoute((p) => ({ ...p, destination: e.target.value }))}
+                          className="bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
+                        >
+                          <option value="">Destino</option>
+                          {activeDestinationCities.map((c) => (
+                            <option key={c.id} value={c.name}>{c.name}</option>
+                          ))}
+                        </select>
+                        <input type="number" step="0.01" min="0" value={newPricingRoute.base_fee} onChange={(e) => setNewPricingRoute((p) => ({ ...p, base_fee: parseFloat(e.target.value) || 0 }))} placeholder="Monto inicial (S/)" className="bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500" />
+                        <input type="number" min="0" max="5000" value={newPricingRoute.included_kg} onChange={(e) => setNewPricingRoute((p) => ({ ...p, included_kg: parseInt(e.target.value, 10) || 0 }))} placeholder="Kg incluidos" className="bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500" />
+                        <input type="number" step="0.0001" min="0" value={newPricingRoute.price_per_kg} onChange={(e) => setNewPricingRoute((p) => ({ ...p, price_per_kg: parseFloat(e.target.value) || 0 }))} placeholder="S/ por kg exceso" className="bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500" />
+                        <input type="number" min="100" value={newPricingRoute.volumetric_factor} onChange={(e) => setNewPricingRoute((p) => ({ ...p, volumetric_factor: parseInt(e.target.value, 10) || 5000 }))} placeholder="Factor vol." className="bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500" />
+                      </div>
+                      <button type="button" onClick={handleCreatePricingRoute} className="mt-4 bg-emerald-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-emerald-500">
+                        Agregar ruta
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {cotizadorSubTab === 'general' && (
+              <div className="space-y-8">
                 <p className="text-sm text-slate-600">
-                  Define el método de cálculo por defecto y los valores iniciales que verán los usuarios al abrir la página de cotización.
+                  Valores iniciales al abrir <strong>/cotizar</strong>. El visitante puede cambiar peso, volumen y ciudades libremente.
                 </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-slate-700 uppercase tracking-widest">Ciudad origen por defecto</label>
+                    <select
+                      value={localConfig.calculator_default_origin ?? ''}
+                      onChange={(e) => setLocalConfig((c) => ({ ...c, calculator_default_origin: e.target.value || null }))}
+                      className="w-full bg-white border-2 border-slate-200 rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      <option value="">Primera disponible</option>
+                      {activeOriginCities.map((c) => (
+                        <option key={c.id} value={c.name}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-slate-700 uppercase tracking-widest">Ciudad destino por defecto</label>
+                    <select
+                      value={localConfig.calculator_default_destination ?? ''}
+                      onChange={(e) => setLocalConfig((c) => ({ ...c, calculator_default_destination: e.target.value || null }))}
+                      className="w-full bg-white border-2 border-slate-200 rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      <option value="">Primera disponible</option>
+                      {activeDestinationCities.map((c) => (
+                        <option key={c.id} value={c.name}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 space-y-4">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Tarifa por defecto (sin ruta configurada)</p>
+                  <p className="text-xs text-slate-600">
+                    Se usa cuando no existe una ruta en &quot;Precios por ruta&quot;. Total = (monto inicial + exceso × S/kg) × express.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-bold text-slate-700 uppercase tracking-widest">Monto inicial (S/)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min={0}
+                        value={localConfig.calculator_base_fee ?? 25}
+                        onChange={(e) =>
+                          setLocalConfig((c) => ({
+                            ...c,
+                            calculator_base_fee: parseFloat(e.target.value) || 0,
+                          }))
+                        }
+                        className="w-full bg-white border-2 border-slate-200 text-slate-900 rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-sm font-bold text-slate-700 uppercase tracking-widest">Kg incluidos</label>
+                      <input
+                        type="number"
+                        min={0}
+                        max={5000}
+                        value={localConfig.calculator_included_kg ?? 5}
+                        onChange={(e) =>
+                          setLocalConfig((c) => ({
+                            ...c,
+                            calculator_included_kg: parseInt(e.target.value, 10) || 0,
+                          }))
+                        }
+                        className="w-full bg-white border-2 border-slate-200 text-slate-900 rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-sm font-bold text-slate-700 uppercase tracking-widest">Costo por kg exceso (S/)</label>
+                      <input
+                        type="number"
+                        step="0.0001"
+                        min={0}
+                        value={localConfig.calculator_excess_price_per_kg ?? 1.4}
+                        onChange={(e) =>
+                          setLocalConfig((c) => ({
+                            ...c,
+                            calculator_excess_price_per_kg: parseFloat(e.target.value) || 0,
+                          }))
+                        }
+                        className="w-full bg-white border-2 border-slate-200 text-slate-900 rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-sm font-bold text-slate-700 uppercase tracking-widest">Multiplicador express</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min={1}
+                        max={10}
+                        value={localConfig.calculator_express_multiplier ?? 1.5}
+                        onChange={(e) =>
+                          setLocalConfig((c) => ({
+                            ...c,
+                            calculator_express_multiplier: parseFloat(e.target.value) || 1.5,
+                          }))
+                        }
+                        className="w-full bg-white border-2 border-slate-200 text-slate-900 rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      />
+                    </div>
+                  </div>
+                </div>
                 <div className="space-y-6 max-w-xl">
                   <div className="space-y-2">
                     <label className="block text-sm font-bold text-slate-700 uppercase tracking-widest">
@@ -967,12 +1242,14 @@ export default function AdminDashboard({
                 </div>
                 <button
                   type="button"
-                  onClick={saveBranding}
+                  onClick={saveCalculatorConfig}
                   disabled={saving}
                   className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold disabled:opacity-50"
                 >
-                  {saving ? 'Guardando…' : 'Guardar configuración del cotizador'}
+                  {saving ? 'Guardando…' : 'Guardar preferencias del cotizador'}
                 </button>
+              </div>
+                )}
               </div>
             )}
 
@@ -1324,14 +1601,19 @@ function ServiceEditForm({
 
 function PricingRouteEditForm({
   route,
+  originCities,
+  destinationCities,
   onSave,
   onCancel,
 }: {
   route: PricingRouteItem;
+  originCities: CalculatorCityItem[];
+  destinationCities: CalculatorCityItem[];
   onSave: (data: {
     origin?: string;
     destination?: string;
     base_fee?: number;
+    included_kg?: number;
     price_per_kg?: number;
     volumetric_factor?: number;
   }) => void;
@@ -1340,32 +1622,46 @@ function PricingRouteEditForm({
   const [origin, setOrigin] = useState(route.origin);
   const [destination, setDestination] = useState(route.destination);
   const [base_fee, setBase_fee] = useState(route.base_fee);
+  const [included_kg, setIncluded_kg] = useState(route.included_kg ?? 5);
   const [price_per_kg, setPrice_per_kg] = useState(route.price_per_kg);
   const [volumetric_factor, setVolumetric_factor] = useState(route.volumetric_factor);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-      <input
-        type="text"
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <select
         value={origin}
         onChange={(e) => setOrigin(e.target.value)}
-        placeholder="Origen"
-        className="bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
-      />
-      <input
-        type="text"
+        className="bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
+      >
+        {originCities.map((c) => (
+          <option key={c.id} value={c.name}>{c.name}</option>
+        ))}
+      </select>
+      <select
         value={destination}
         onChange={(e) => setDestination(e.target.value)}
-        placeholder="Destino"
-        className="bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
-      />
+        className="bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
+      >
+        {destinationCities.map((c) => (
+          <option key={c.id} value={c.name}>{c.name}</option>
+        ))}
+      </select>
       <input
         type="number"
         step="0.01"
         min="0"
         value={base_fee}
         onChange={(e) => setBase_fee(parseFloat(e.target.value) || 0)}
-        placeholder="Cuota base"
+        placeholder="Monto inicial (S/)"
+        className="bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
+      />
+      <input
+        type="number"
+        min="0"
+        max="5000"
+        value={included_kg}
+        onChange={(e) => setIncluded_kg(parseInt(e.target.value, 10) || 0)}
+        placeholder="Kg incluidos"
         className="bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
       />
       <input
@@ -1374,7 +1670,7 @@ function PricingRouteEditForm({
         min="0"
         value={price_per_kg}
         onChange={(e) => setPrice_per_kg(parseFloat(e.target.value) || 0)}
-        placeholder="S/ por kg"
+        placeholder="S/ por kg exceso"
         className="bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
       />
       <input
@@ -1385,10 +1681,10 @@ function PricingRouteEditForm({
         placeholder="Factor vol."
         className="bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
       />
-      <div className="flex gap-2 lg:col-span-5">
+      <div className="flex gap-2 lg:col-span-3">
         <button
           type="button"
-          onClick={() => onSave({ origin, destination, base_fee, price_per_kg, volumetric_factor })}
+          onClick={() => onSave({ origin, destination, base_fee, included_kg, price_per_kg, volumetric_factor })}
           className="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold text-sm"
         >
           Guardar
@@ -1398,6 +1694,48 @@ function PricingRouteEditForm({
         </button>
       </div>
     </div>
+  );
+}
+
+function CityEditRow({
+  city,
+  onSave,
+  onCancel,
+}: {
+  city: CalculatorCityItem;
+  onSave: (data: { name?: string; can_origin?: boolean; can_destination?: boolean; is_active?: boolean; sort_order?: number }) => void;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState(city.name);
+  const [can_origin, setCan_origin] = useState(city.can_origin);
+  const [can_destination, setCan_destination] = useState(city.can_destination);
+  const [is_active, setIs_active] = useState(city.is_active !== false);
+  const [sort_order, setSort_order] = useState(city.sort_order ?? 0);
+
+  return (
+    <>
+      <td className="px-4 py-3">
+        <input value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+      </td>
+      <td className="px-4 py-3">
+        <input type="checkbox" checked={can_origin} onChange={(e) => setCan_origin(e.target.checked)} />
+      </td>
+      <td className="px-4 py-3">
+        <input type="checkbox" checked={can_destination} onChange={(e) => setCan_destination(e.target.checked)} />
+      </td>
+      <td className="px-4 py-3">
+        <input type="checkbox" checked={is_active} onChange={(e) => setIs_active(e.target.checked)} />
+      </td>
+      <td className="px-4 py-3">
+        <input type="number" min={0} value={sort_order} onChange={(e) => setSort_order(parseInt(e.target.value, 10) || 0)} className="w-20 bg-white border border-slate-200 rounded-lg px-2 py-1 text-sm" />
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex gap-2">
+          <button type="button" onClick={() => onSave({ name, can_origin, can_destination, is_active, sort_order })} className="text-xs font-bold text-emerald-600 hover:underline">Guardar</button>
+          <button type="button" onClick={onCancel} className="text-xs font-bold text-slate-500 hover:underline">Cancelar</button>
+        </div>
+      </td>
+    </>
   );
 }
 

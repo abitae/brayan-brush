@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\BrayanBrush\CotizarController::__invoke
- * @see app/Http/Controllers/BrayanBrush/CotizarController.php:12
+ * @see app/Http/Controllers/BrayanBrush/CotizarController.php:13
  * @route '/cotizar'
  */
 const CotizarController = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ CotizarController.definition = {
 
 /**
 * @see \App\Http\Controllers\BrayanBrush\CotizarController::__invoke
- * @see app/Http/Controllers/BrayanBrush/CotizarController.php:12
+ * @see app/Http/Controllers/BrayanBrush/CotizarController.php:13
  * @route '/cotizar'
  */
 CotizarController.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ CotizarController.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\BrayanBrush\CotizarController::__invoke
- * @see app/Http/Controllers/BrayanBrush/CotizarController.php:12
+ * @see app/Http/Controllers/BrayanBrush/CotizarController.php:13
  * @route '/cotizar'
  */
 CotizarController.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ CotizarController.get = (options?: RouteQueryOptions): RouteDefinition<'get'> =>
 })
 /**
 * @see \App\Http\Controllers\BrayanBrush\CotizarController::__invoke
- * @see app/Http/Controllers/BrayanBrush/CotizarController.php:12
+ * @see app/Http/Controllers/BrayanBrush/CotizarController.php:13
  * @route '/cotizar'
  */
 CotizarController.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ CotizarController.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
 
     /**
 * @see \App\Http\Controllers\BrayanBrush\CotizarController::__invoke
- * @see app/Http/Controllers/BrayanBrush/CotizarController.php:12
+ * @see app/Http/Controllers/BrayanBrush/CotizarController.php:13
  * @route '/cotizar'
  */
     const CotizarControllerForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ CotizarController.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
 
             /**
 * @see \App\Http\Controllers\BrayanBrush\CotizarController::__invoke
- * @see app/Http/Controllers/BrayanBrush/CotizarController.php:12
+ * @see app/Http/Controllers/BrayanBrush/CotizarController.php:13
  * @route '/cotizar'
  */
         CotizarControllerForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ CotizarController.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
         })
             /**
 * @see \App\Http\Controllers\BrayanBrush\CotizarController::__invoke
- * @see app/Http/Controllers/BrayanBrush/CotizarController.php:12
+ * @see app/Http/Controllers/BrayanBrush/CotizarController.php:13
  * @route '/cotizar'
  */
         CotizarControllerForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

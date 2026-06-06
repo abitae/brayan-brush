@@ -16,6 +16,7 @@ class PricingRouteController extends Controller
             'origin' => $r->origin,
             'destination' => $r->destination,
             'base_fee' => (float) $r->base_fee,
+            'included_kg' => (int) ($r->included_kg ?? 5),
             'price_per_kg' => (float) $r->price_per_kg,
             'volumetric_factor' => (int) $r->volumetric_factor,
         ]);
@@ -29,11 +30,13 @@ class PricingRouteController extends Controller
             'origin' => 'required|string|max:100',
             'destination' => 'required|string|max:100',
             'base_fee' => 'nullable|numeric|min:0',
+            'included_kg' => 'nullable|integer|min:0|max:5000',
             'price_per_kg' => 'required|numeric|min:0',
             'volumetric_factor' => 'nullable|integer|min:100',
         ]);
 
         $validated['base_fee'] = $validated['base_fee'] ?? 0;
+        $validated['included_kg'] = $validated['included_kg'] ?? 5;
         $validated['volumetric_factor'] = $validated['volumetric_factor'] ?? 5000;
 
         $route = PricingRoute::create($validated);
@@ -43,6 +46,7 @@ class PricingRouteController extends Controller
             'origin' => $route->origin,
             'destination' => $route->destination,
             'base_fee' => (float) $route->base_fee,
+            'included_kg' => (int) $route->included_kg,
             'price_per_kg' => (float) $route->price_per_kg,
             'volumetric_factor' => (int) $route->volumetric_factor,
         ], 201);
@@ -54,6 +58,7 @@ class PricingRouteController extends Controller
             'origin' => 'sometimes|string|max:100',
             'destination' => 'sometimes|string|max:100',
             'base_fee' => 'nullable|numeric|min:0',
+            'included_kg' => 'nullable|integer|min:0|max:5000',
             'price_per_kg' => 'sometimes|numeric|min:0',
             'volumetric_factor' => 'nullable|integer|min:100',
         ]);
@@ -67,6 +72,7 @@ class PricingRouteController extends Controller
             'origin' => $pricingRoute->origin,
             'destination' => $pricingRoute->destination,
             'base_fee' => (float) $pricingRoute->base_fee,
+            'included_kg' => (int) $pricingRoute->included_kg,
             'price_per_kg' => (float) $pricingRoute->price_per_kg,
             'volumetric_factor' => (int) $pricingRoute->volumetric_factor,
         ]);

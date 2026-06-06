@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\PricingRouteController::store
- * @see app/Http/Controllers/Api/PricingRouteController.php:26
+ * @see app/Http/Controllers/Api/PricingRouteController.php:27
  * @route '/api/pricing-routes'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -94,7 +94,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PricingRouteController::store
- * @see app/Http/Controllers/Api/PricingRouteController.php:26
+ * @see app/Http/Controllers/Api/PricingRouteController.php:27
  * @route '/api/pricing-routes'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\PricingRouteController::store
- * @see app/Http/Controllers/Api/PricingRouteController.php:26
+ * @see app/Http/Controllers/Api/PricingRouteController.php:27
  * @route '/api/pricing-routes'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -113,7 +113,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\PricingRouteController::store
- * @see app/Http/Controllers/Api/PricingRouteController.php:26
+ * @see app/Http/Controllers/Api/PricingRouteController.php:27
  * @route '/api/pricing-routes'
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -123,7 +123,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\PricingRouteController::store
- * @see app/Http/Controllers/Api/PricingRouteController.php:26
+ * @see app/Http/Controllers/Api/PricingRouteController.php:27
  * @route '/api/pricing-routes'
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -134,7 +134,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\PricingRouteController::update
- * @see app/Http/Controllers/Api/PricingRouteController.php:51
+ * @see app/Http/Controllers/Api/PricingRouteController.php:55
  * @route '/api/pricing-routes/{pricingRoute}'
  */
 export const update = (args: { pricingRoute: number | { id: number } } | [pricingRoute: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -149,7 +149,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PricingRouteController::update
- * @see app/Http/Controllers/Api/PricingRouteController.php:51
+ * @see app/Http/Controllers/Api/PricingRouteController.php:55
  * @route '/api/pricing-routes/{pricingRoute}'
  */
 update.url = (args: { pricingRoute: number | { id: number } } | [pricingRoute: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -182,7 +182,7 @@ update.url = (args: { pricingRoute: number | { id: number } } | [pricingRoute: n
 
 /**
 * @see \App\Http\Controllers\Api\PricingRouteController::update
- * @see app/Http/Controllers/Api/PricingRouteController.php:51
+ * @see app/Http/Controllers/Api/PricingRouteController.php:55
  * @route '/api/pricing-routes/{pricingRoute}'
  */
 update.put = (args: { pricingRoute: number | { id: number } } | [pricingRoute: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -192,7 +192,7 @@ update.put = (args: { pricingRoute: number | { id: number } } | [pricingRoute: n
 
     /**
 * @see \App\Http\Controllers\Api\PricingRouteController::update
- * @see app/Http/Controllers/Api/PricingRouteController.php:51
+ * @see app/Http/Controllers/Api/PricingRouteController.php:55
  * @route '/api/pricing-routes/{pricingRoute}'
  */
     const updateForm = (args: { pricingRoute: number | { id: number } } | [pricingRoute: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -207,7 +207,7 @@ update.put = (args: { pricingRoute: number | { id: number } } | [pricingRoute: n
 
             /**
 * @see \App\Http\Controllers\Api\PricingRouteController::update
- * @see app/Http/Controllers/Api/PricingRouteController.php:51
+ * @see app/Http/Controllers/Api/PricingRouteController.php:55
  * @route '/api/pricing-routes/{pricingRoute}'
  */
         updateForm.put = (args: { pricingRoute: number | { id: number } } | [pricingRoute: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -223,7 +223,7 @@ update.put = (args: { pricingRoute: number | { id: number } } | [pricingRoute: n
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\PricingRouteController::destroy
- * @see app/Http/Controllers/Api/PricingRouteController.php:75
+ * @see app/Http/Controllers/Api/PricingRouteController.php:81
  * @route '/api/pricing-routes/{pricingRoute}'
  */
 export const destroy = (args: { pricingRoute: number | { id: number } } | [pricingRoute: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -238,7 +238,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PricingRouteController::destroy
- * @see app/Http/Controllers/Api/PricingRouteController.php:75
+ * @see app/Http/Controllers/Api/PricingRouteController.php:81
  * @route '/api/pricing-routes/{pricingRoute}'
  */
 destroy.url = (args: { pricingRoute: number | { id: number } } | [pricingRoute: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -271,7 +271,7 @@ destroy.url = (args: { pricingRoute: number | { id: number } } | [pricingRoute: 
 
 /**
 * @see \App\Http\Controllers\Api\PricingRouteController::destroy
- * @see app/Http/Controllers/Api/PricingRouteController.php:75
+ * @see app/Http/Controllers/Api/PricingRouteController.php:81
  * @route '/api/pricing-routes/{pricingRoute}'
  */
 destroy.delete = (args: { pricingRoute: number | { id: number } } | [pricingRoute: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -281,7 +281,7 @@ destroy.delete = (args: { pricingRoute: number | { id: number } } | [pricingRout
 
     /**
 * @see \App\Http\Controllers\Api\PricingRouteController::destroy
- * @see app/Http/Controllers/Api/PricingRouteController.php:75
+ * @see app/Http/Controllers/Api/PricingRouteController.php:81
  * @route '/api/pricing-routes/{pricingRoute}'
  */
     const destroyForm = (args: { pricingRoute: number | { id: number } } | [pricingRoute: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -296,7 +296,7 @@ destroy.delete = (args: { pricingRoute: number | { id: number } } | [pricingRout
 
             /**
 * @see \App\Http\Controllers\Api\PricingRouteController::destroy
- * @see app/Http/Controllers/Api/PricingRouteController.php:75
+ * @see app/Http/Controllers/Api/PricingRouteController.php:81
  * @route '/api/pricing-routes/{pricingRoute}'
  */
         destroyForm.delete = (args: { pricingRoute: number | { id: number } } | [pricingRoute: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

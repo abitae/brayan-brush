@@ -8,10 +8,11 @@ class PricingRoute extends Model
 {
     protected $table = 'pricing_routes';
 
-    protected $fillable = ['origin', 'destination', 'base_fee', 'price_per_kg', 'volumetric_factor'];
+    protected $fillable = ['origin', 'destination', 'base_fee', 'included_kg', 'price_per_kg', 'volumetric_factor'];
 
     protected $casts = [
         'base_fee' => 'decimal:2',
+        'included_kg' => 'integer',
         'price_per_kg' => 'decimal:4',
         'volumetric_factor' => 'integer',
     ];

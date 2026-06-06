@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\BrayanBrush;
 
 use App\Http\Controllers\Controller;
+use App\Models\CalculatorCity;
 use App\Models\PricingRoute;
 use App\Models\ProhibitedCategory;
 use App\Models\Quote;
@@ -45,6 +46,12 @@ class AdminController extends Controller
                 'calculator_default_length' => $config->calculator_default_length !== null ? (int) $config->calculator_default_length : 30,
                 'calculator_default_width' => $config->calculator_default_width !== null ? (int) $config->calculator_default_width : 30,
                 'calculator_default_height' => $config->calculator_default_height !== null ? (int) $config->calculator_default_height : 30,
+                'calculator_base_fee' => $config->calculator_base_fee !== null ? (float) $config->calculator_base_fee : 25,
+                'calculator_included_kg' => $config->calculator_included_kg !== null ? (int) $config->calculator_included_kg : 5,
+                'calculator_excess_price_per_kg' => $config->calculator_excess_price_per_kg !== null ? (float) $config->calculator_excess_price_per_kg : 1.4,
+                'calculator_express_multiplier' => $config->calculator_express_multiplier !== null ? (float) $config->calculator_express_multiplier : 1.5,
+                'calculator_default_origin' => $config->calculator_default_origin,
+                'calculator_default_destination' => $config->calculator_default_destination,
                 'gemini_model' => $config->gemini_model,
                 'gemini_system_instruction' => $config->gemini_system_instruction,
                 'gemini_enabled' => $config->gemini_enabled,
@@ -63,9 +70,11 @@ class AdminController extends Controller
                 'origin' => $r->origin,
                 'destination' => $r->destination,
                 'base_fee' => (float) $r->base_fee,
+                'included_kg' => (int) ($r->included_kg ?? 5),
                 'price_per_kg' => (float) $r->price_per_kg,
                 'volumetric_factor' => (int) $r->volumetric_factor,
             ])->values()->all(),
+            'calculatorCities' => CalculatorCity::listForAdmin()->values()->all(),
         ]);
     }
 }

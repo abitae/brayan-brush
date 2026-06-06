@@ -1,10 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getPricingRoutes } from '@/api/brayan-api';
 import type { PricingRouteItem } from '@/api/brayan-api';
 import { ICONS } from '@/constants/brayan';
 
-const DEFAULT_ORIGINS = ['Lima', 'Callao', 'Trujillo'];
-const DEFAULT_DESTINATIONS = ['Arequipa', 'Cusco', 'Piura', 'Trujillo'];
+export interface CalculatorCityOption {
+  id: number;
+  name: string;
+  can_origin: boolean;
+  can_destination: boolean;
+}
 
 export interface CalculatorDefaults {
   default_mode?: 'weight' | 'dimensions';
@@ -12,6 +16,12 @@ export interface CalculatorDefaults {
   default_length?: number;
   default_width?: number;
   default_height?: number;
+  default_origin?: string;
+  default_destination?: string;
+  base_fee?: number;
+  included_kg?: number;
+  excess_price_per_kg?: number;
+  express_multiplier?: number;
 }
 
 export interface QuotePayload {
@@ -26,20 +36,36 @@ export interface QuotePayload {
 interface CalculatorSectionProps {
   onQuoteSubmit?: (quote: QuotePayload) => Promise<void> | void;
   calculatorDefaults?: CalculatorDefaults | null;
+  calculatorCities?: CalculatorCityOption[];
 }
 
-export default function CalculatorSection({ onQuoteSubmit, calculatorDefaults }: CalculatorSectionProps) {
+export default function CalculatorSection({
+  onQuoteSubmit,
+  calculatorDefaults,
+  calculatorCities = [],
+}: CalculatorSectionProps) {
   const defaults = calculatorDefaults ?? {};
   const [pricingRoutes, setPricingRoutes] = useState<PricingRouteItem[]>([]);
+  const [routesLoaded, setRoutesLoaded] = useState(false);
   const [calcMode, setCalcMode] = useState<'weight' | 'dimensions'>(defaults.default_mode ?? 'weight');
   const [weight, setWeight] = useState(defaults.default_weight ?? 5);
   const [length, setLength] = useState(defaults.default_length ?? 30);
   const [width, setWidth] = useState(defaults.default_width ?? 30);
   const [height, setHeight] = useState(defaults.default_height ?? 30);
-  const [origin, setOrigin] = useState('Lima');
-  const [destination, setDestination] = useState('Arequipa');
+  const [origin, setOrigin] = useState(defaults.default_origin ?? 'Lima');
+  const [destination, setDestination] = useState(defaults.default_destination ?? 'Arequipa');
   const [serviceType, setServiceType] = useState('standard');
-  const [result, setResult] = useState({ total: 0, volumetric: 0, charged: 0 });
+  const [result, setResult] = useState({
+    total: 0,
+    volumetric: 0,
+    charged: 0,
+    baseFee: 0,
+    includedKg: 0,
+    excessKg: 0,
+    excessCost: 0,
+    expressMultiplier: 1,
+    hasConfiguredRoute: false,
+  });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [bookingName, setBookingName] = useState('');
   const [bookingPhone, setBookingPhone] = useState('');
@@ -49,33 +75,83 @@ export default function CalculatorSection({ onQuoteSubmit, calculatorDefaults }:
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    getPricingRoutes().then(setPricingRoutes).catch(() => {});
+    getPricingRoutes()
+      .then(setPricingRoutes)
+      .catch(() => {})
+      .finally(() => setRoutesLoaded(true));
   }, []);
 
-  const origins = [...new Set([...DEFAULT_ORIGINS, ...pricingRoutes.map((r) => r.origin)])].sort();
-  const destinations = [...new Set([...DEFAULT_DESTINATIONS, ...pricingRoutes.map((r) => r.destination)])].sort();
+  const origins = useMemo(
+    () => calculatorCities.filter((c) => c.can_origin).map((c) => c.name),
+    [calculatorCities]
+  );
+
+  const allDestinations = useMemo(
+    () => calculatorCities.filter((c) => c.can_destination).map((c) => c.name),
+    [calculatorCities]
+  );
+
+  const destinationsWithRoute = useMemo(
+    () => pricingRoutes.filter((r) => r.origin === origin).map((r) => r.destination),
+    [pricingRoutes, origin]
+  );
+
+  const destinations = useMemo(() => {
+    if (destinationsWithRoute.length === 0) {
+      return allDestinations;
+    }
+    const routed = allDestinations.filter((d) => destinationsWithRoute.includes(d));
+    return routed.length > 0 ? routed : allDestinations;
+  }, [allDestinations, destinationsWithRoute]);
+
+  useEffect(() => {
+    if (origins.length > 0 && !origins.includes(origin)) {
+      setOrigin(origins[0]);
+    }
+  }, [origins, origin]);
+
+  useEffect(() => {
+    if (destinations.length > 0 && !destinations.includes(destination)) {
+      setDestination(destinations[0]);
+    }
+  }, [destinations, destination]);
 
   useEffect(() => {
     const route = pricingRoutes.find((r) => r.origin === origin && r.destination === destination);
+    const hasConfiguredRoute = Boolean(route);
     const factor = route?.volumetric_factor ?? 5000;
-    const baseFee = route?.base_fee ?? 25;
-    const pricePerKg = route?.price_per_kg ?? 1.4;
+    const baseFee = route?.base_fee ?? defaults.base_fee ?? 25;
+    const includedKg = route?.included_kg ?? defaults.included_kg ?? 5;
+    const excessPricePerKg = route?.price_per_kg ?? defaults.excess_price_per_kg ?? 1.4;
+    const expressMultiplier =
+      serviceType === 'express' ? (defaults.express_multiplier ?? 1.5) : 1;
 
     const volumetricWeight = (length * width * height) / factor;
-    const chargedWeight = calcMode === 'weight' ? weight : Math.max(weight, volumetricWeight);
-    const serviceMultiplier = serviceType === 'express' ? 1.5 : 1;
-    const total = baseFee + chargedWeight * pricePerKg * serviceMultiplier;
+    const chargedWeight = calcMode === 'weight' ? weight : volumetricWeight;
+    const excessKg = Math.max(0, chargedWeight - includedKg);
+    const excessCost = excessKg * excessPricePerKg;
+    const subtotal = baseFee + excessCost;
+    const total = subtotal * expressMultiplier;
+
     setResult({
       total: parseFloat(total.toFixed(2)),
       volumetric: parseFloat(volumetricWeight.toFixed(2)),
       charged: parseFloat(chargedWeight.toFixed(2)),
+      baseFee: parseFloat(baseFee.toFixed(2)),
+      includedKg,
+      excessKg: parseFloat(excessKg.toFixed(2)),
+      excessCost: parseFloat(excessCost.toFixed(2)),
+      expressMultiplier,
+      hasConfiguredRoute,
     });
-  }, [weight, length, width, height, origin, destination, serviceType, calcMode, pricingRoutes]);
+  }, [weight, length, width, height, origin, destination, serviceType, calcMode, pricingRoutes, defaults.base_fee, defaults.included_kg, defaults.excess_price_per_kg, defaults.express_multiplier]);
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const fullDetails = `Cotización: S/ ${result.total.toFixed(2)}. Ruta: ${origin} a ${destination}. Peso: ${result.charged}kg. ${bookingDetails}`;
+    const modeLabel = calcMode === 'weight' ? 'peso real' : 'volumen';
+    const excessNote = result.excessKg > 0 ? ` Exceso: ${result.excessKg} kg (S/ ${result.excessCost.toFixed(2)}).` : '';
+    const fullDetails = `Cotización: S/ ${result.total.toFixed(2)}. Ruta: ${origin} a ${destination}. Método: ${modeLabel}. Peso cobrado: ${result.charged} kg. Monto inicial: S/ ${result.baseFee.toFixed(2)} (incluye ${result.includedKg} kg).${excessNote} ${bookingDetails}`;
     
     try {
       if (onQuoteSubmit) {
@@ -126,31 +202,46 @@ export default function CalculatorSection({ onQuoteSubmit, calculatorDefaults }:
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <label className="block text-sm font-bold text-slate-700 uppercase tracking-widest ml-1">Origen</label>
-                  <select
-                    value={origin}
-                    onChange={(e) => setOrigin(e.target.value)}
-                    className="w-full bg-white border-2 border-slate-200 text-slate-900 rounded-2xl px-6 py-4 placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none font-bold"
-                  >
-                    {origins.map((o) => (
-                      <option key={o} value={o}>
-                        {o}
-                      </option>
-                    ))}
-                  </select>
+                  {origins.length === 0 ? (
+                    <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                      No hay ciudades de origen configuradas. Contacte al administrador.
+                    </p>
+                  ) : (
+                    <select
+                      value={origin}
+                      onChange={(e) => setOrigin(e.target.value)}
+                      className="w-full bg-white border-2 border-slate-200 text-slate-900 rounded-2xl px-6 py-4 placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none font-bold"
+                    >
+                      {origins.map((o) => (
+                        <option key={o} value={o}>
+                          {o}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
                 <div className="space-y-3">
                   <label className="block text-sm font-bold text-slate-700 uppercase tracking-widest ml-1">Destino</label>
-                  <select
-                    value={destination}
-                    onChange={(e) => setDestination(e.target.value)}
-                    className="w-full bg-white border-2 border-slate-200 text-slate-900 rounded-2xl px-6 py-4 placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none font-bold"
-                  >
-                    {destinations.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
+                  {destinations.length === 0 ? (
+                    <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                      No hay ciudades de destino configuradas. Contacte al administrador.
+                    </p>
+                  ) : (
+                    <select
+                      value={destination}
+                      onChange={(e) => setDestination(e.target.value)}
+                      className="w-full bg-white border-2 border-slate-200 text-slate-900 rounded-2xl px-6 py-4 placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none font-bold"
+                    >
+                      {destinations.map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                          {routesLoaded && !pricingRoutes.some((r) => r.origin === origin && r.destination === d)
+                            ? ' (sin tarifa)'
+                            : ''}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               </div>
 
@@ -264,11 +355,55 @@ export default function CalculatorSection({ onQuoteSubmit, calculatorDefaults }:
                 Resumen de Tarifa
                 <ContainerIcon />
               </h3>
+              {!result.hasConfiguredRoute && (
+                <div className="mb-6 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-xs font-medium leading-relaxed text-amber-200">
+                  No hay tarifa configurada para {origin} → {destination}. Se usa una tarifa referencial; un asesor confirmará el precio final.
+                </div>
+              )}
               <div className="space-y-6 mb-12">
                 <div className="flex justify-between items-center text-slate-400 font-bold">
-                  <span>Peso Base para Cobro:</span>
-                  <span className="text-white">{result.charged} KG</span>
+                  <span>Método:</span>
+                  <span className="text-white text-xs uppercase">
+                    {calcMode === 'weight' ? 'Peso real' : 'Volumen'}
+                  </span>
                 </div>
+                {calcMode === 'weight' ? (
+                  <div className="flex justify-between items-center text-slate-400 font-bold">
+                    <span>Peso para cobro:</span>
+                    <span className="text-white">{result.charged} KG</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex justify-between items-center text-slate-400 font-bold">
+                      <span>Peso volumétrico:</span>
+                      <span className="text-white">{result.volumetric} KG</span>
+                    </div>
+                    <div className="flex justify-between items-center text-slate-400 font-bold">
+                      <span>Peso para cobro:</span>
+                      <span className="text-white">{result.charged} KG</span>
+                    </div>
+                  </>
+                )}
+                <div className="flex justify-between items-center text-slate-400 font-bold">
+                  <span>Monto inicial:</span>
+                  <span className="text-white">S/ {result.baseFee.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center text-slate-400 font-bold">
+                  <span>Kg incluidos:</span>
+                  <span className="text-white">{result.includedKg} KG</span>
+                </div>
+                {result.excessKg > 0 && (
+                  <div className="flex justify-between items-center text-slate-400 font-bold">
+                    <span>Exceso ({result.excessKg} kg):</span>
+                    <span className="text-white">S/ {result.excessCost.toFixed(2)}</span>
+                  </div>
+                )}
+                {result.expressMultiplier > 1 && (
+                  <div className="flex justify-between items-center text-slate-400 font-bold">
+                    <span>Recargo express (×{result.expressMultiplier}):</span>
+                    <span className="text-white">aplicado</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center text-slate-400 font-bold">
                   <span>Ruta:</span>
                   <span className="text-white">{origin} → {destination}</span>
@@ -288,13 +423,16 @@ export default function CalculatorSection({ onQuoteSubmit, calculatorDefaults }:
                   <span className="text-7xl font-black tracking-tighter">S/ {result.total.toFixed(2)}</span>
                 </div>
                 <p className="text-[10px] text-slate-500 font-medium leading-relaxed mt-4">
-                  * Tarifa aproximada. Incluye IGV y seguros básicos.
+                  {calcMode === 'weight'
+                    ? '* Monto inicial + exceso por kg sobre el peso incluido. Incluye IGV y seguros básicos.'
+                    : '* Monto inicial + exceso por kg sobre el peso volumétrico incluido. Incluye IGV y seguros básicos.'}
                 </p>
               </div>
               <button
                 type="button"
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-6 rounded-3xl font-black text-lg mt-12 transition-all shadow-xl"
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-6 rounded-3xl font-black text-lg mt-12 transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => setIsModalOpen(true)}
+                disabled={origins.length === 0 || destinations.length === 0}
               >
                 Reservar Envío Ahora
               </button>

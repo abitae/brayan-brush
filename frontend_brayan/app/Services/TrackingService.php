@@ -22,47 +22,69 @@ class TrackingService
     public const STATUS_ENTREGADO = 'entregado';
 
     /**
-     * Consulta el estado de un envío por código.
-     * Si está configurada la URL del servicio externo, la llama; si no, devuelve datos ficticios.
+     * Consulta el estado de un envío por código y documento contra system_brayan_v1.
      *
-     * @return array{code: string, status: string, status_label: string, current_location: string|null, origin: string, destination: string, estimated_delivery: string|null, progress: int, history: array<int, array{date: string, location: string, desc: string}>}
+     * @return array{code: string, status: string, status_label: string, current_location: string|null, origin: string, destination: string, estimated_delivery: string|null, progress: int, history: array<int, array{date: string, location: string, desc: string}>, is_home?: bool, delivery_address?: string|null, name_origen?: string, name_destino?: string}
      */
-    public function track(string $code): array
+    public function track(string $code, string $document = ''): array
     {
         $code = trim($code);
+        $document = trim($document);
+
+        if ($document === '') {
+            throw new TrackingServerException('El DNI o RUC es obligatorio para consultar el seguimiento.');
+        }
+
+        $url = $this->resolveTrackingApiUrl();
+        if ($url === null) {
+            throw new TrackingServerException('Servicio de rastreo no configurado. Contacta al administrador.');
+        }
+
+        $result = $this->callExternalApi($url, $code, $document);
+        if ($result === null) {
+            throw new TrackingServerException('Error al consultar el seguimiento. Intenta de nuevo.');
+        }
+
+        return $result;
+    }
+
+    private function resolveTrackingApiUrl(): ?string
+    {
         $url = null;
         try {
             $config = SiteConfig::default();
             $url = $config->tracking_api_url ?? null;
         } catch (\Throwable) {
-            // Tabla o columna no disponible; usar datos ficticios
+            // Tabla no disponible
         }
 
         if (! empty($url) && is_string($url)) {
-            $result = $this->callExternalApi($url, $code);
-            if ($result !== null) {
-                return $result;
-            }
+            return rtrim($url, '/');
         }
 
-        return $this->mockData($code);
+        $envUrl = config('services.system_brayan.tracking_api_url');
+
+        return is_string($envUrl) && $envUrl !== '' ? rtrim($envUrl, '/') : null;
     }
 
     /**
-     * Llama al endpoint externo. Usa ?code= (ej. system_brayan: /api/frontend/tracking?code=ENC-...).
-     * Acepta respuestas en formato genérico o system_brayan (estado_encomienda, lugar_origen, lugar_destino, fechas).
+     * Llama al endpoint de system_brayan_v1: GET ?code=&document=
      */
-    private function callExternalApi(string $baseUrl, string $code): ?array
+    private function callExternalApi(string $baseUrl, string $code, string $document): ?array
     {
         $sep = str_contains($baseUrl, '?') ? '&' : '?';
-        $url = rtrim($baseUrl, '/').$sep.'code='.urlencode($code);
+        $url = $baseUrl.$sep
+            .'code='.urlencode($code)
+            .'&document='.urlencode($document);
 
         try {
-            $response = Http::timeout(10)->get($url);
+            $response = Http::timeout(15)
+                ->withOptions(['verify' => (bool) config('services.system_brayan.verify_ssl', true)])
+                ->get($url);
 
             if (! $response->successful()) {
                 $status = $response->status();
-                Log::warning('Tracking API error', ['url' => $url, 'status' => $status]);
+                Log::warning('Tracking API error', ['url' => $baseUrl, 'status' => $status]);
                 if ($status === 404) {
                     throw new TrackingNotFoundException('Encomienda no encontrada.');
                 }
@@ -82,16 +104,12 @@ class TrackingService
         } catch (TrackingNotFoundException|TrackingServerException $e) {
             throw $e;
         } catch (\Throwable $e) {
-            Log::warning('Tracking API exception', ['url' => $url, 'message' => $e->getMessage()]);
+            Log::warning('Tracking API exception', ['url' => $baseUrl, 'message' => $e->getMessage()]);
 
             return null;
         }
     }
 
-    /**
-     * Normaliza la respuesta del servicio externo al formato interno.
-     * Soporta formato system_brayan (estado_encomienda, lugar_origen, lugar_destino, fecha_*) o genérico.
-     */
     private function normalizeExternalResponse(string $code, array $data): array
     {
         $isSystemBrayan = isset($data['estado_encomienda']) || array_key_exists('lugar_origen', $data);
@@ -115,42 +133,34 @@ class TrackingService
             'status' => $status,
             'status_label' => $this->statusLabel($status),
             'current_location' => $data['current_location'] ?? $data['ubicacion_actual'] ?? null,
-            'origin' => $data['origin'] ?? $data['origen'] ?? 'Origen',
-            'destination' => $data['destination'] ?? $data['destino'] ?? 'Destino',
+            'origin' => $data['origin'] ?? $data['origen'] ?? '—',
+            'destination' => $data['destination'] ?? $data['destino'] ?? '—',
             'estimated_delivery' => $data['estimated_delivery'] ?? $data['entrega_estimada'] ?? null,
             'progress' => $this->progressFromStatus($status),
             'history' => $history,
         ];
     }
 
-    /**
-     * Normaliza respuesta de system_brayan: estado_encomienda, name_origen, name_destino, lugar_origen, lugar_destino, direccion_envio, isHome, fecha_*.
-     */
     private function normalizeSystemBrayanResponse(array $data, string $code): array
     {
         $status = $this->normalizeStatus($data['estado_encomienda'] ?? self::STATUS_REGISTRADO);
-        $nameOrigen = $data['name_origen'] ?? '';
-        $nameDestino = $data['name_destino'] ?? '';
-        $lugarOrigen = $data['lugar_origen'] ?? '';
-        $lugarDestino = $data['lugar_destino'] ?? '';
+        $nameOrigen = trim((string) ($data['name_origen'] ?? ''));
+        $nameDestino = trim((string) ($data['name_destino'] ?? ''));
+        $lugarOrigen = trim((string) ($data['lugar_origen'] ?? ''));
+        $lugarDestino = trim((string) ($data['lugar_destino'] ?? ''));
         $direccionEnvio = $data['direccion_envio'] ?? null;
         $isHome = ! empty($data['isHome']);
 
         $origin = $this->formatOriginDestination($nameOrigen, $lugarOrigen);
-        if ($isHome) {
-            $destination = 'Entrega a domicilio';
-            $deliveryAddress = $direccionEnvio ? (string) $direccionEnvio : null;
-        } else {
-            $destination = $this->formatOriginDestination($nameDestino, $lugarDestino);
-            $deliveryAddress = null;
-        }
+        $destination = $this->formatOriginDestination($nameDestino, $lugarDestino);
+        $deliveryAddress = $isHome && $direccionEnvio ? (string) $direccionEnvio : null;
 
         $currentLocation = match ($status) {
             self::STATUS_REGISTRADO => $origin,
-            self::STATUS_ENVIADO => 'En tránsito',
-            self::STATUS_RECIBIDO => $isHome ? ($direccionEnvio ?: $destination) : $this->formatOriginDestination($nameDestino, $lugarDestino),
-            self::STATUS_RETORNADO => 'En retorno',
-            self::STATUS_ENTREGADO => $isHome && $direccionEnvio ? (string) $direccionEnvio : $this->formatOriginDestination($nameDestino, $lugarDestino),
+            self::STATUS_ENVIADO => 'En tránsito hacia '.$nameDestino,
+            self::STATUS_RECIBIDO => $isHome && $deliveryAddress ? $deliveryAddress : $destination,
+            self::STATUS_RETORNADO => 'En retorno a '.$nameOrigen,
+            self::STATUS_ENTREGADO => $isHome && $deliveryAddress ? $deliveryAddress : $destination,
             default => $origin,
         };
 
@@ -163,6 +173,8 @@ class TrackingService
             'current_location' => $currentLocation ?: null,
             'origin' => $origin ?: '—',
             'destination' => $destination ?: '—',
+            'name_origen' => $nameOrigen ?: null,
+            'name_destino' => $nameDestino ?: null,
             'estimated_delivery' => null,
             'progress' => $this->progressFromStatus($status),
             'history' => $history,
@@ -173,14 +185,13 @@ class TrackingService
 
     private function formatOriginDestination(string $name, string $address): string
     {
-        $name = trim($name);
-        $address = trim($address);
         if ($name !== '' && $address !== '') {
             return $name.' – '.$address;
         }
         if ($address !== '') {
             return $address;
         }
+
         return $name ?: '—';
     }
 
@@ -194,6 +205,7 @@ class TrackingService
             if (is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}/', $value)) {
                 return date('d M, H:i', strtotime($value));
             }
+
             return (string) $value;
         };
 
@@ -256,42 +268,5 @@ class TrackingService
             self::STATUS_ENTREGADO => 100,
             default => 0,
         };
-    }
-
-    /**
-     * Datos ficticios para pruebas cuando no hay URL configurada o falla el servicio externo.
-     */
-    private function mockData(string $code): array
-    {
-        $codeUpper = strtoupper($code);
-        if ($codeUpper === '') {
-            $codeUpper = 'BB-2024-DEMO';
-        }
-
-        $status = self::STATUS_ENVIADO;
-        $history = [
-            ['date' => '24 Feb, 08:00', 'location' => 'Lima - Oficina Central', 'desc' => 'Envío registrado'],
-            ['date' => '24 Feb, 14:30', 'location' => 'En tránsito', 'desc' => 'Enviado'],
-        ];
-
-        if (str_ends_with($codeUpper, '-0')) {
-            $status = self::STATUS_REGISTRADO;
-            $history = [['date' => date('d M, H:i', strtotime('-1 hour')), 'location' => 'Lima', 'desc' => 'Envío registrado en sistema']];
-        } elseif (str_ends_with($codeUpper, '-R')) {
-            $status = self::STATUS_ENTREGADO;
-            $history[] = ['date' => '25 Feb, 11:00', 'location' => 'Arequipa', 'desc' => 'Entregado'];
-        }
-
-        return [
-            'code' => $codeUpper,
-            'status' => $status,
-            'status_label' => $this->statusLabel($status),
-            'current_location' => $status === self::STATUS_ENTREGADO ? 'Entregado' : ($status === self::STATUS_ENVIADO ? 'En tránsito' : 'Oficina Lima'),
-            'origin' => 'Puerto del Callao, Lima',
-            'destination' => 'Sede Central Arequipa',
-            'estimated_delivery' => $status === self::STATUS_ENTREGADO ? null : 'Mañana, 09:00 AM',
-            'progress' => $this->progressFromStatus($status),
-            'history' => $history,
-        ];
     }
 }

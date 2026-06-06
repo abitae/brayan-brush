@@ -134,7 +134,7 @@ update.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\ConfigController::uploadLogo
- * @see app/Http/Controllers/Api/ConfigController.php:95
+ * @see app/Http/Controllers/Api/ConfigController.php:101
  * @route '/api/config/upload-logo'
  */
 export const uploadLogo = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -149,7 +149,7 @@ uploadLogo.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ConfigController::uploadLogo
- * @see app/Http/Controllers/Api/ConfigController.php:95
+ * @see app/Http/Controllers/Api/ConfigController.php:101
  * @route '/api/config/upload-logo'
  */
 uploadLogo.url = (options?: RouteQueryOptions) => {
@@ -158,7 +158,7 @@ uploadLogo.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\ConfigController::uploadLogo
- * @see app/Http/Controllers/Api/ConfigController.php:95
+ * @see app/Http/Controllers/Api/ConfigController.php:101
  * @route '/api/config/upload-logo'
  */
 uploadLogo.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -168,7 +168,7 @@ uploadLogo.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\ConfigController::uploadLogo
- * @see app/Http/Controllers/Api/ConfigController.php:95
+ * @see app/Http/Controllers/Api/ConfigController.php:101
  * @route '/api/config/upload-logo'
  */
     const uploadLogoForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -178,7 +178,7 @@ uploadLogo.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\ConfigController::uploadLogo
- * @see app/Http/Controllers/Api/ConfigController.php:95
+ * @see app/Http/Controllers/Api/ConfigController.php:101
  * @route '/api/config/upload-logo'
  */
         uploadLogoForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -189,7 +189,7 @@ uploadLogo.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     uploadLogo.form = uploadLogoForm
 /**
 * @see \App\Http\Controllers\Api\ConfigController::uploadBanner
- * @see app/Http/Controllers/Api/ConfigController.php:108
+ * @see app/Http/Controllers/Api/ConfigController.php:114
  * @route '/api/config/upload-banner'
  */
 export const uploadBanner = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -204,7 +204,7 @@ uploadBanner.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ConfigController::uploadBanner
- * @see app/Http/Controllers/Api/ConfigController.php:108
+ * @see app/Http/Controllers/Api/ConfigController.php:114
  * @route '/api/config/upload-banner'
  */
 uploadBanner.url = (options?: RouteQueryOptions) => {
@@ -213,7 +213,7 @@ uploadBanner.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\ConfigController::uploadBanner
- * @see app/Http/Controllers/Api/ConfigController.php:108
+ * @see app/Http/Controllers/Api/ConfigController.php:114
  * @route '/api/config/upload-banner'
  */
 uploadBanner.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -223,7 +223,7 @@ uploadBanner.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\ConfigController::uploadBanner
- * @see app/Http/Controllers/Api/ConfigController.php:108
+ * @see app/Http/Controllers/Api/ConfigController.php:114
  * @route '/api/config/upload-banner'
  */
     const uploadBannerForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -233,7 +233,7 @@ uploadBanner.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\ConfigController::uploadBanner
- * @see app/Http/Controllers/Api/ConfigController.php:108
+ * @see app/Http/Controllers/Api/ConfigController.php:114
  * @route '/api/config/upload-banner'
  */
         uploadBannerForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -244,7 +244,7 @@ uploadBanner.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     uploadBanner.form = uploadBannerForm
 /**
 * @see \App\Http\Controllers\Api\ConfigController::uploadBannerBg
- * @see app/Http/Controllers/Api/ConfigController.php:121
+ * @see app/Http/Controllers/Api/ConfigController.php:127
  * @route '/api/config/upload-banner-bg'
  */
 export const uploadBannerBg = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -259,7 +259,7 @@ uploadBannerBg.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ConfigController::uploadBannerBg
- * @see app/Http/Controllers/Api/ConfigController.php:121
+ * @see app/Http/Controllers/Api/ConfigController.php:127
  * @route '/api/config/upload-banner-bg'
  */
 uploadBannerBg.url = (options?: RouteQueryOptions) => {
@@ -268,7 +268,7 @@ uploadBannerBg.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\ConfigController::uploadBannerBg
- * @see app/Http/Controllers/Api/ConfigController.php:121
+ * @see app/Http/Controllers/Api/ConfigController.php:127
  * @route '/api/config/upload-banner-bg'
  */
 uploadBannerBg.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -278,7 +278,7 @@ uploadBannerBg.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => 
 
     /**
 * @see \App\Http\Controllers\Api\ConfigController::uploadBannerBg
- * @see app/Http/Controllers/Api/ConfigController.php:121
+ * @see app/Http/Controllers/Api/ConfigController.php:127
  * @route '/api/config/upload-banner-bg'
  */
     const uploadBannerBgForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -288,7 +288,7 @@ uploadBannerBg.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => 
 
             /**
 * @see \App\Http\Controllers\Api\ConfigController::uploadBannerBg
- * @see app/Http/Controllers/Api/ConfigController.php:121
+ * @see app/Http/Controllers/Api/ConfigController.php:127
  * @route '/api/config/upload-banner-bg'
  */
         uploadBannerBgForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

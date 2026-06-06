@@ -2,7 +2,7 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFo
 import servicios3c6a55 from './servicios'
 /**
 * @see \App\Http\Controllers\BrayanBrush\CotizarController::__invoke
- * @see app/Http/Controllers/BrayanBrush/CotizarController.php:12
+ * @see app/Http/Controllers/BrayanBrush/CotizarController.php:13
  * @route '/cotizar'
  */
 export const cotizar = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -17,7 +17,7 @@ cotizar.definition = {
 
 /**
 * @see \App\Http\Controllers\BrayanBrush\CotizarController::__invoke
- * @see app/Http/Controllers/BrayanBrush/CotizarController.php:12
+ * @see app/Http/Controllers/BrayanBrush/CotizarController.php:13
  * @route '/cotizar'
  */
 cotizar.url = (options?: RouteQueryOptions) => {
@@ -26,7 +26,7 @@ cotizar.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\BrayanBrush\CotizarController::__invoke
- * @see app/Http/Controllers/BrayanBrush/CotizarController.php:12
+ * @see app/Http/Controllers/BrayanBrush/CotizarController.php:13
  * @route '/cotizar'
  */
 cotizar.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ cotizar.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\BrayanBrush\CotizarController::__invoke
- * @see app/Http/Controllers/BrayanBrush/CotizarController.php:12
+ * @see app/Http/Controllers/BrayanBrush/CotizarController.php:13
  * @route '/cotizar'
  */
 cotizar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ cotizar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\BrayanBrush\CotizarController::__invoke
- * @see app/Http/Controllers/BrayanBrush/CotizarController.php:12
+ * @see app/Http/Controllers/BrayanBrush/CotizarController.php:13
  * @route '/cotizar'
  */
     const cotizarForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ cotizar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\BrayanBrush\CotizarController::__invoke
- * @see app/Http/Controllers/BrayanBrush/CotizarController.php:12
+ * @see app/Http/Controllers/BrayanBrush/CotizarController.php:13
  * @route '/cotizar'
  */
         cotizarForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -64,7 +64,7 @@ cotizar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\BrayanBrush\CotizarController::__invoke
- * @see app/Http/Controllers/BrayanBrush/CotizarController.php:12
+ * @see app/Http/Controllers/BrayanBrush/CotizarController.php:13
  * @route '/cotizar'
  */
         cotizarForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -626,7 +626,7 @@ reclamos.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     reclamos.form = reclamosForm
 /**
 * @see \App\Http\Controllers\BrayanBrush\AdminController::__invoke
- * @see app/Http/Controllers/BrayanBrush/AdminController.php:16
+ * @see app/Http/Controllers/BrayanBrush/AdminController.php:17
  * @route '/admin'
  */
 export const admin = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -641,7 +641,7 @@ admin.definition = {
 
 /**
 * @see \App\Http\Controllers\BrayanBrush\AdminController::__invoke
- * @see app/Http/Controllers/BrayanBrush/AdminController.php:16
+ * @see app/Http/Controllers/BrayanBrush/AdminController.php:17
  * @route '/admin'
  */
 admin.url = (options?: RouteQueryOptions) => {
@@ -650,7 +650,7 @@ admin.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\BrayanBrush\AdminController::__invoke
- * @see app/Http/Controllers/BrayanBrush/AdminController.php:16
+ * @see app/Http/Controllers/BrayanBrush/AdminController.php:17
  * @route '/admin'
  */
 admin.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -659,7 +659,7 @@ admin.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\BrayanBrush\AdminController::__invoke
- * @see app/Http/Controllers/BrayanBrush/AdminController.php:16
+ * @see app/Http/Controllers/BrayanBrush/AdminController.php:17
  * @route '/admin'
  */
 admin.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -669,7 +669,7 @@ admin.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\BrayanBrush\AdminController::__invoke
- * @see app/Http/Controllers/BrayanBrush/AdminController.php:16
+ * @see app/Http/Controllers/BrayanBrush/AdminController.php:17
  * @route '/admin'
  */
     const adminForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -679,7 +679,7 @@ admin.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\BrayanBrush\AdminController::__invoke
- * @see app/Http/Controllers/BrayanBrush/AdminController.php:16
+ * @see app/Http/Controllers/BrayanBrush/AdminController.php:17
  * @route '/admin'
  */
         adminForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -688,7 +688,7 @@ admin.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\BrayanBrush\AdminController::__invoke
- * @see app/Http/Controllers/BrayanBrush/AdminController.php:16
+ * @see app/Http/Controllers/BrayanBrush/AdminController.php:17
  * @route '/admin'
  */
         adminForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

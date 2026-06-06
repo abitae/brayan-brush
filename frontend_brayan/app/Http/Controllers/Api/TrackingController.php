@@ -8,7 +8,6 @@ use App\Http\Controllers\Controller;
 use App\Services\TrackingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class TrackingController extends Controller
@@ -18,40 +17,35 @@ class TrackingController extends Controller
     ) {}
 
     /**
-     * Consultar seguimiento por código (público). POST con captcha_token para validación.
+     * Consultar seguimiento por código y documento (GET, público).
+     */
+    public function show(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'code' => 'required|string|max:64',
+            'document' => 'required|string|regex:/^\d{8,11}$/',
+        ]);
+
+        return $this->resolveTracking($validated['code'], $validated['document']);
+    }
+
+    /**
+     * Consultar seguimiento por código y documento (POST, sin captcha).
      */
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'code' => 'required|string|max:64',
-            'captcha_token' => 'required|string',
+            'document' => 'required|string|regex:/^\d{8,11}$/',
         ]);
 
-        $secret = config('services.recaptcha.secret_key');
-        if (empty($secret)) {
-            return response()->json(['message' => 'Completa la verificación de seguridad.'], 422);
-        }
+        return $this->resolveTracking($validated['code'], $validated['document']);
+    }
 
-        $verify = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-            'secret' => $secret,
-            'response' => $validated['captcha_token'],
-            'remoteip' => $request->ip(),
-        ]);
-
-        $body = $verify->json();
-        if (! ($body['success'] ?? false)) {
-            return response()->json(['message' => 'Completa la verificación de seguridad.'], 422);
-        }
-
-        // reCAPTCHA v3: validar action y score (0.0–1.0; umbral típico >= 0.5)
-        $action = $body['action'] ?? '';
-        $score = (float) ($body['score'] ?? 0);
-        if ($action !== 'tracking' || $score < 0.5) {
-            return response()->json(['message' => 'Completa la verificación de seguridad.'], 422);
-        }
-
+    private function resolveTracking(string $code, string $document): JsonResponse
+    {
         try {
-            $result = $this->tracking->track($validated['code']);
+            $result = $this->tracking->track($code, $document);
 
             return response()->json($result);
         } catch (TrackingNotFoundException $e) {
@@ -62,29 +56,6 @@ class TrackingController extends Controller
             report($e);
             Log::warning('Tracking error', ['message' => $e->getMessage()]);
 
-            return response()->json(['message' => 'Error al consultar el seguimiento. Intenta de nuevo.'], 500);
-        }
-    }
-
-    /**
-     * Consultar seguimiento por código (GET, sin captcha; mantener por compatibilidad).
-     */
-    public function show(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'code' => 'required|string|max:64',
-        ]);
-
-        try {
-            $result = $this->tracking->track($validated['code']);
-
-            return response()->json($result);
-        } catch (TrackingNotFoundException $e) {
-            return response()->json(['message' => $e->getMessage()], 404);
-        } catch (TrackingServerException $e) {
-            return response()->json(['message' => $e->getMessage()], 502);
-        } catch (\Throwable $e) {
-            report($e);
             return response()->json(['message' => 'Error al consultar el seguimiento. Intenta de nuevo.'], 500);
         }
     }
