@@ -82,7 +82,14 @@
         }
 
         .qr-code img {
-            width: 100px;
+            width: 55px;
+            height: 55px;
+        }
+
+        .qr-code-label {
+            font-size: 7px;
+            margin-top: 4px;
+            color: #333;
         }
 
         .footer {
@@ -234,7 +241,8 @@
         @endif
     </div>
     <div class="qr-code">
-        <img height="100" src="./img/consultaqr.png" alt="Logo" class="logo">
+        <img src="data:image/svg+xml;base64,{{ $qrCode }}" alt="Consulta validez CPE SUNAT">
+        <p class="qr-code-label">Consulta validez en SUNAT</p>
     </div>
 
     <div class="footer">

@@ -169,6 +169,12 @@
             height: 100px;
         }
 
+        .qr-code-label {
+            font-size: 8px;
+            margin-top: 4px;
+            color: #444;
+        }
+
         .footer-content {
             vertical-align: top;
             padding-left: 15px;
@@ -363,8 +369,9 @@
     <div class="footer">
         <table class="footer-table">
             <tr>
-                <td width="20%">
-                    <img height="100" src="./img/consultaqr.png" alt="Logo" class="logo">
+                <td width="20%" style="text-align: center; vertical-align: top;">
+                    <img class="qr-code" src="data:image/svg+xml;base64,{{ $qrCode }}" alt="Consulta validez CPE SUNAT">
+                    <p class="qr-code-label">Consulta validez en SUNAT</p>
                 </td>
                 <td class="footer-content">
                     Gracias por su compra<br>

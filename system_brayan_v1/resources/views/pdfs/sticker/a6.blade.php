@@ -9,180 +9,315 @@
             margin: 0;
             padding: 0;
             font-family: DejaVu Sans, sans-serif;
-            font-size: 12px;
+            font-size: 10px;
+            color: #111;
         }
 
-        .shipping-label {
-            width: 148mm;
-            height: 105mm;
-            border: 1px solid #95a5a6;
-            border-radius: 8px;
-            position: relative;
-            overflow: hidden;
+        table {
+            border-collapse: collapse;
+            width: 100%;
         }
 
-        .header {
-            background-color: white;
-            padding: 2px 2px 2px 2px;
-            border-bottom: 1px solid #95a5a6;
-            text-align: center;
-            position: relative;
+        .label {
+            width: 100%;
+            border: 2px solid #111;
+            page-break-inside: avoid;
         }
 
-        .company-name {
-            color: #1b914c;
-            font-size: 26px;
-            font-weight: bold;
-            margin: 0;
-            padding: 2px 0 5px 0;
+        .top-bar td {
+            padding: 8px 12px;
+            vertical-align: middle;
+            border-bottom: 2px solid #111;
         }
 
-
-        .priority-mail {
-            background-color: #e74c3c;
-            color: white;
-            padding: 2px 10px 5px 10px;
+        .brand {
             font-size: 20px;
             font-weight: bold;
-            text-align: center;
-            border-bottom: 1px solid #95a5a6;
-        }
-
-        .table-content {
-            width: 100%;
-            border-bottom: 1px solid #95a5a6;
-        }
-
-        .section-title {
-            color: #95a5a6;
-            margin: 2px 0 5px 0;
-            font-weight: bold;
-        }
-
-        .details-text {
             margin: 0;
-            line-height: 1.4;
-            padding-top: 2px;
+            letter-spacing: 0.3px;
         }
 
-        .package-info {
-            padding: 2px 10px 10px 10px;
-            background-color: #f9f9f9;
-            border-bottom: 1px solid #95a5a6;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-gap: 10px;
-        }
-
-        .package-details {
-            color: #95a5a6;
-            margin: 2px 0 5px 0;
-        }
-
-        .package-value {
-            color: #333;
-            font-weight: bold;
-        }
-
-        .tracking-row {
-            padding: 2px 10px 8px 10px;
-            background-color: #f5f5f5;
-            border-bottom: 1px solid #95a5a6;
-        }
-
-        .tracking-number {
-            font-weight: bold;
+        .brand-sub {
+            font-size: 9px;
             margin: 2px 0 0 0;
+            color: #444;
         }
 
-        .barcode {
+        .label-type {
+            font-size: 11px;
+            font-weight: bold;
+            text-align: right;
+            text-transform: uppercase;
+            margin: 0;
+            color: #444;
+        }
+
+        .destino-bar td {
             text-align: center;
-            padding: 2px 0 10px 0;
-            background-color: white;
+            padding: 8px 10px;
+            border-bottom: 1px solid #ccc;
         }
 
-        .barcode img {
-            max-height: 80px;
-            width: auto;
-            margin-top: 2px;
+        .destino-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 0;
+            text-transform: uppercase;
         }
 
-        .handle-with-care {
-            color: #95a5a6;
-            font-size: 14px;
-            margin-right: 5px;
-            padding-top: 2px;
+        .destino-addr {
+            font-size: 9px;
+            margin: 3px 0 0 0;
+            color: #444;
         }
 
-        .fragile {
-            color: #95a5a6;
-            font-size: 14px;
-            padding-top: 2px;
+        .section-head td {
+            font-size: 9px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #444;
+            padding: 5px 8px 3px 8px;
+            border-bottom: 1px solid #ccc;
         }
 
-        .icon {
-            height: 30px;
-            width: 30px;
-            margin: 2px 5px 0 5px;
-            display: inline-block;
+        .party-body td {
+            padding: 6px 8px 8px 8px;
+            vertical-align: top;
+            border-right: 1px solid #ddd;
+        }
+
+        .party-name {
+            font-size: 13px;
+            font-weight: bold;
+            margin: 0 0 4px 0;
+            line-height: 1.2;
+            color: #000;
+        }
+
+        .party-line {
+            margin: 0 0 3px 0;
+            font-size: 10px;
+            line-height: 1.3;
+            color: #333;
+        }
+
+        .party-doc {
+            margin: 5px 0 0 0;
+            font-size: 11px;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .qr-cell {
+            vertical-align: bottom;
+            text-align: center;
+            padding: 6px 4px;
+            border-left: 1px solid #ddd;
+            width: 48mm;
+        }
+
+        .qr-cell img {
+            width: 44mm;
+            height: 44mm;
+        }
+
+        .qr-code {
+            margin: 4px 0 0 0;
+            font-size: 12px;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .meta td {
+            border-top: 2px solid #111;
+            border-right: 1px solid #ddd;
+            padding: 6px 6px;
+            vertical-align: top;
+            width: 16.66%;
+        }
+
+        .meta-label {
+            font-size: 7px;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin: 0 0 2px 0;
+            letter-spacing: 0.3px;
+        }
+
+        .meta-value {
+            font-size: 11px;
+            font-weight: bold;
+            margin: 0;
+            color: #000;
+        }
+
+        .footer td {
+            padding: 7px 10px;
             vertical-align: middle;
+            border-top: 2px solid #111;
+        }
+
+        .tracking-sub {
+            font-size: 7px;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .tracking-code {
+            font-size: 15px;
+            font-weight: bold;
+            margin: 1px 0 0 0;
+            color: #000;
+        }
+
+        .origin-line {
+            font-size: 9px;
+            color: #444;
+            margin: 3px 0 0 0;
+            line-height: 1.25;
+        }
+
+        .tags {
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #000;
+            text-align: right;
+        }
+
+        .tag-sep {
+            color: #999;
+            font-weight: normal;
+            margin: 0 4px;
         }
     </style>
 </head>
 
 <body>
-    <div class="shipping-label">
-        <div class="header">
-            <h1 class="company-name">BRAYAN BRUSH EIRL</h1>
-        </div>
-        <div class="priority-mail">{{ $encomienda->sucursal_destinatario->name }}</div>
+    @php
+        use Illuminate\Support\Str;
+        $pesoTotal = $encomienda->paquetes->sum('peso');
+        $tipoEntrega = $encomienda->isHome ? 'DOMICILIO' : 'AGENCIA';
+        $docDest = ($encomienda->destinatario->type_code == '6' ? 'RUC' : 'DNI') . ': ' . $encomienda->destinatario->code;
+        $docRem = ($encomienda->remitente->type_code == '6' ? 'RUC' : 'DNI') . ': ' . $encomienda->remitente->code;
+        try {
+            $fechaEnvio = $encomienda->fecha_creacion
+                ? \Carbon\Carbon::parse($encomienda->fecha_creacion)->format('d/m/Y')
+                : date('d/m/Y');
+        } catch (\Exception $e) {
+            $fechaEnvio = date('d/m/Y');
+        }
+        $destAddr = Str::limit($encomienda->sucursal_destinatario->address ?? '', 80);
+        $origenTexto = $encomienda->sucursal_remitente
+            ? Str::limit($encomienda->sucursal_remitente->name . ($encomienda->sucursal_remitente->address ? ' — ' . $encomienda->sucursal_remitente->address : ''), 90)
+            : '';
+        $tags = array_filter([
+            $encomienda->estado_pago,
+            $tipoEntrega,
+            $encomienda->isReturn ? 'RETORNO' : null,
+        ]);
+    @endphp
 
-        <table class="table-content">
-            <tr>
-                <td>
-                    <p class="section-title">PARA:</p>
-                    <p class="details-text">
-                        {{ $encomienda->destinatario->name }}<br>
-                        {{ $encomienda->destinatario->address }}<br>
-                        {{ $encomienda->destinatario->code }}
-                    </p>
+    <table class="label">
+        <tr class="top-bar">
+            <td colspan="4">
+                <p class="brand">BRAYAN BRUSH EIRL</p>
+                <p class="brand-sub">Corporación Logística</p>
+            </td>
+            <td colspan="2">
+                <p class="label-type">Etiqueta de envío</p>
+            </td>
+        </tr>
 
-                </td>
-                <td>
-                    <p class="section-title">DE:</p>
-                    <p class="details-text">
-                        {{ $encomienda->remitente->name }}<br>
-                        {{ $encomienda->remitente->address }}<br>
-                        {{ $encomienda->remitente->code }}
-                    </p>
-                </td>
-            </tr>
-        </table>
+        <tr class="destino-bar">
+            <td colspan="6">
+                <p class="destino-name">Destino: {{ strtoupper($encomienda->sucursal_destinatario->name) }}</p>
+                @if ($destAddr)
+                    <p class="destino-addr">{{ $destAddr }}</p>
+                @endif
+            </td>
+        </tr>
 
+        <tr class="section-head">
+            <td colspan="2">Destinatario</td>
+            <td colspan="2">Remitente</td>
+            <td colspan="2" rowspan="2" class="qr-cell">
+                <img src="data:image/svg+xml;base64,{{ $qrCode }}" alt="QR {{ $encomienda->code }}">
+                <p class="qr-code">{{ $encomienda->code }}</p>
+            </td>
+        </tr>
+        <tr class="party-body">
+            <td colspan="2">
+                <p class="party-name">{{ Str::limit($encomienda->destinatario->name, 40) }}</p>
+                @if ($encomienda->destinatario->address)
+                    <p class="party-line">{{ Str::limit($encomienda->destinatario->address, 55) }}</p>
+                @endif
+                @if ($encomienda->destinatario->phone)
+                    <p class="party-line">Tel: {{ $encomienda->destinatario->phone }}</p>
+                @endif
+                <p class="party-doc">{{ $docDest }}</p>
+            </td>
+            <td colspan="2">
+                <p class="party-name">{{ Str::limit($encomienda->remitente->name, 40) }}</p>
+                @if ($encomienda->remitente->address)
+                    <p class="party-line">{{ Str::limit($encomienda->remitente->address, 55) }}</p>
+                @endif
+                @if ($encomienda->remitente->phone)
+                    <p class="party-line">Tel: {{ $encomienda->remitente->phone }}</p>
+                @endif
+                <p class="party-doc">{{ $docRem }}</p>
+            </td>
+        </tr>
 
-        <div class="package-info">
-            <div>
-                <p class="package-details">NÚMERO DE LOTE: <span class="package-value">{{ $encomienda->code }}</span>
+        <tr class="meta">
+            <td>
+                <p class="meta-label">Código</p>
+                <p class="meta-value">{{ $encomienda->code }}</p>
+            </td>
+            <td>
+                <p class="meta-label">Referencia</p>
+                <p class="meta-value">#{{ $encomienda->id }}</p>
+            </td>
+            <td>
+                <p class="meta-label">Fecha</p>
+                <p class="meta-value">{{ $fechaEnvio }}</p>
+            </td>
+            <td>
+                <p class="meta-label">Bultos</p>
+                <p class="meta-value">{{ $encomienda->cantidad }}</p>
+            </td>
+            <td>
+                <p class="meta-label">Peso</p>
+                <p class="meta-value">{{ $pesoTotal > 0 ? number_format($pesoTotal, 2) . ' kg' : 'N/A' }}</p>
+            </td>
+            <td>
+                <p class="meta-label">Monto</p>
+                <p class="meta-value">S/ {{ number_format($encomienda->monto, 2) }}</p>
+            </td>
+        </tr>
+
+        <tr class="footer">
+            <td colspan="4">
+                <p class="tracking-sub">Seguimiento</p>
+                <p class="tracking-code">{{ $encomienda->code }}</p>
+                @if ($origenTexto)
+                    <p class="origin-line"><strong>Origen:</strong> {{ $origenTexto }}</p>
+                @endif
+            </td>
+            <td colspan="2">
+                <p class="tags">
+                    @foreach ($tags as $i => $tag)
+                        @if ($i > 0)<span class="tag-sep">|</span>@endif
+                        {{ $tag }}
+                    @endforeach
                 </p>
-                <p class="package-details">NÚMERO REF: <span class="package-value">{{ $encomienda->id }}</span></p>
-            </div>
-            <div>
-                <p class="package-details">FECHA DE ENVIO: <span class="package-value">{{ date('d/m/Y') }}</span></p>
-                <p class="package-details">PESO: <span
-                        class="package-value">{{ $encomienda->paquetes->sum('peso') ?? 'N/A' }} kg</span>
-                </p>
-            </div>
-        </div>
-
-        <div class="tracking-row">
-            <p class="tracking-number">Seguimiento: {{ $encomienda->code }}</p>
-        </div>
-
-        <div class="barcode">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Codigo_QR.svg/100px-Codigo_QR.svg.png?20080824194905"
-                alt="Código QR">
-        </div>
-    </div>
+            </td>
+        </tr>
+    </table>
 </body>
 
 </html>

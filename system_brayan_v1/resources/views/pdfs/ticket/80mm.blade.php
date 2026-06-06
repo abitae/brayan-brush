@@ -66,10 +66,19 @@
         .qr-code {
             text-align: center;
             margin: 10px 0;
+            border-top: 1px dashed #ccc;
+            padding-top: 8px;
         }
 
         .qr-code img {
-            width: 50px;
+            width: 55px;
+            height: 55px;
+        }
+
+        .qr-code-label {
+            font-size: 8px;
+            margin: 4px 0 0 0;
+            font-weight: bold;
         }
 
         .footer {
@@ -199,7 +208,8 @@
     </div>
 
     <div class="qr-code">
-        <img style="width: 50px" src="./img/terminos_qr.jpg" alt="Código QR">
+        <img src="data:image/svg+xml;base64,{{ $qrCode }}" alt="QR {{ $ticket->encomienda->code }}">
+        <p class="qr-code-label">{{ $ticket->encomienda->code }}</p>
     </div>
 
     <div class="footer">
