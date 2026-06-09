@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PageContent;
 use Illuminate\Database\Eloquent\Model;
 
 class SiteConfig extends Model
@@ -25,8 +26,10 @@ class SiteConfig extends Model
         'hero_subtitle',
         'primary_color',
         'logo_url',
+        'favicon_url',
         'banner_url',
         'banner_bg_url',
+        'page_content',
         'tracking_api_url',
         'calculator_default_mode',
         'calculator_default_weight',
@@ -51,9 +54,18 @@ class SiteConfig extends Model
     ];
 
     protected $casts = [
+        'page_content' => 'array',
         'gemini_enabled' => 'boolean',
         'openai_enabled' => 'boolean',
     ];
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function resolvedPageContent(): array
+    {
+        return PageContent::merge($this->page_content);
+    }
 
     /**
      * Get the default site config, creating it if it does not exist.
@@ -69,6 +81,7 @@ class SiteConfig extends Model
                 'hero_subtitle' => 'Líder en transporte terrestre nacional en Perú.',
                 'primary_color' => '#059669',
                 'logo_url' => null,
+                'favicon_url' => null,
                 'banner_url' => null,
                 'banner_bg_url' => null,
                 'tracking_api_url' => config('services.system_brayan.tracking_api_url'),

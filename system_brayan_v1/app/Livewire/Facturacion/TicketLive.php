@@ -4,7 +4,6 @@ namespace App\Livewire\Facturacion;
 
 use App\Models\Facturacion\Ticket;
 use App\Traits\UtilsTrait;
-use Carbon\Carbon;
 use Livewire\Component;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
@@ -30,9 +29,20 @@ class TicketLive extends Component
     ];
     public function mount()
     {
-        $this->filtroFechaInicio = Carbon::now()->startOfDay()->format('Y-m-d H:i');//$this->dateNow('Y-m-d');
-        $this->filtroFechaFin = $this->dateNow('Y-m-d H:i:s');
+        $this->filtroFechaInicio = $this->filterDateStart();
+        $this->filtroFechaFin = $this->filterDateEnd();
     }
+
+    public function updatedFiltroFechaInicio(): void
+    {
+        $this->ensureDateRangeOrder($this->filtroFechaInicio, $this->filtroFechaFin);
+    }
+
+    public function updatedFiltroFechaFin(): void
+    {
+        $this->ensureDateRangeOrder($this->filtroFechaInicio, $this->filtroFechaFin);
+    }
+
     public function render()
     {
         $tickets = Ticket::query()
@@ -47,9 +57,9 @@ class TicketLive extends Component
                 });
             })
             ->when($this->filtroFechaInicio && $this->filtroFechaFin, function ($query) {
-                return $query->whereBetween('created_at', [
-                    Carbon::parse($this->filtroFechaInicio)->startOfDay(),
-                    Carbon::parse($this->filtroFechaFin)->endOfDay()
+                return $query->whereBetween('fechaEmision', [
+                    $this->parseFilterDateStart($this->filtroFechaInicio),
+                    $this->parseFilterDateEnd($this->filtroFechaFin),
                 ]);
             })
             ->when($this->FiltroFormaPagoTipo !== 'Todos', function ($query) {

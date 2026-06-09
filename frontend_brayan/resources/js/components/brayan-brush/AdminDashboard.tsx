@@ -4,16 +4,24 @@ import { Link, router } from '@inertiajs/react';
 import {
   Ban,
   Bot,
+  ClipboardList,
   FileText,
   LogOut,
+  MapPin,
   Palette,
   Receipt,
+  Type,
   Wrench,
 } from 'lucide-react';
+import PageContentEditor from '@/components/brayan-brush/admin/PageContentEditor';
+import AgenciesAdminPanel from '@/components/brayan-brush/admin/AgenciesAdminPanel';
+import { DEFAULT_PAGE_CONTENT } from '@/hooks/use-page-content';
+import type { PageContent } from '@/types/page-content';
 import { logout } from '@/routes';
 import {
   createCalculatorCity,
   createPricingRoute,
+  deleteComplaint,
   createProhibitedCategory,
   createProhibitedItem,
   createService,
@@ -24,19 +32,26 @@ import {
   deleteQuote,
   deleteService,
   updateCalculatorCity,
+  updateComplaint,
   updateConfig,
   updatePricingRoute,
   updateProhibitedCategory,
   updateProhibitedItem,
   updateQuote,
   updateService,
+  uploadAboutImage,
   uploadBanner,
   uploadBannerBg,
+  uploadFavicon,
   uploadLogo,
+  uploadServiceIcon,
   uploadServiceImage,
 } from '@/api/brayan-api';
 import type {
+  AgencyItem,
   CalculatorCityItem,
+  ComplaintItem,
+  ComplaintStatus,
   PricingRouteItem,
   ProhibitedCategoryAdmin,
   QuoteItem,
@@ -44,7 +59,14 @@ import type {
   SiteConfig,
 } from '@/api/brayan-api';
 
-const ICON_TYPES = ['Box', 'Home', 'Package'] as const;
+function mergePageContent(stored?: PageContent): PageContent {
+  if (!stored) return DEFAULT_PAGE_CONTENT;
+  const out = { ...DEFAULT_PAGE_CONTENT };
+  for (const key of Object.keys(DEFAULT_PAGE_CONTENT) as (keyof PageContent)[]) {
+    out[key] = { ...DEFAULT_PAGE_CONTENT[key], ...(stored[key] as object) };
+  }
+  return out;
+}
 
 interface AdminDashboardProps {
   config: SiteConfig;
@@ -53,7 +75,21 @@ interface AdminDashboardProps {
   quotes: QuoteItem[];
   pricingRoutes: PricingRouteItem[];
   calculatorCities: CalculatorCityItem[];
+  agencies: AgencyItem[];
+  complaints: ComplaintItem[];
 }
+
+const COMPLAINT_STATUS_LABELS: Record<ComplaintStatus, string> = {
+  pendiente: 'Pendiente',
+  en_proceso: 'En proceso',
+  resuelto: 'Resuelto',
+};
+
+const COMPLAINT_STATUS_STYLES: Record<ComplaintStatus, string> = {
+  pendiente: 'bg-amber-100 text-amber-800 border-amber-200',
+  en_proceso: 'bg-blue-100 text-blue-800 border-blue-200',
+  resuelto: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+};
 
 export default function AdminDashboard({
   config,
@@ -62,6 +98,8 @@ export default function AdminDashboard({
   quotes: initialQuotes,
   pricingRoutes: initialPricingRoutes,
   calculatorCities: initialCalculatorCities,
+  agencies: initialAgencies,
+  complaints: initialComplaints,
 }: AdminDashboardProps) {
   const [activeTab, setActiveTab] = useState('branding');
   const [cotizadorSubTab, setCotizadorSubTab] = useState<'ciudades' | 'tarifas' | 'general'>('ciudades');
@@ -71,7 +109,14 @@ export default function AdminDashboard({
   const [localQuotes, setLocalQuotes] = useState<QuoteItem[]>(initialQuotes);
   const [localPricingRoutes, setLocalPricingRoutes] = useState<PricingRouteItem[]>(initialPricingRoutes);
   const [localCalculatorCities, setLocalCalculatorCities] = useState<CalculatorCityItem[]>(initialCalculatorCities);
+  const [localAgencies, setLocalAgencies] = useState<AgencyItem[]>(initialAgencies);
+  const [localComplaints, setLocalComplaints] = useState<ComplaintItem[]>(initialComplaints);
+  const [complaintFilter, setComplaintFilter] = useState<ComplaintStatus | 'all'>('all');
+  const [localPageContent, setLocalPageContent] = useState<PageContent>(() =>
+    mergePageContent(config.page_content)
+  );
   const [uploading, setUploading] = useState<string | null>(null);
+  const [uploadingAbout, setUploadingAbout] = useState(false);
   const [saving, setSaving] = useState(false);
   const [newCity, setNewCity] = useState({
     name: '',
@@ -83,7 +128,7 @@ export default function AdminDashboard({
   const [editingCityId, setEditingCityId] = useState<number | null>(null);
 
   // Formulario nuevo servicio
-  const [newService, setNewService] = useState({ title: '', description: '', icon_type: 'Box' as const });
+  const [newService, setNewService] = useState({ title: '', description: '' });
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [newCategoryTitle, setNewCategoryTitle] = useState('');
   const [editingQuotePrice, setEditingQuotePrice] = useState<Record<number, string>>({});
@@ -118,22 +163,38 @@ export default function AdminDashboard({
   useEffect(() => {
     setLocalCalculatorCities(initialCalculatorCities);
   }, [initialCalculatorCities]);
+  useEffect(() => {
+    setLocalAgencies(initialAgencies);
+  }, [initialAgencies]);
+  useEffect(() => {
+    setLocalComplaints(initialComplaints);
+  }, [initialComplaints]);
+  useEffect(() => {
+    setLocalPageContent(mergePageContent(config.page_content));
+  }, [config.page_content]);
 
   const activeOriginCities = localCalculatorCities.filter((c) => c.is_active !== false && c.can_origin);
   const activeDestinationCities = localCalculatorCities.filter((c) => c.is_active !== false && c.can_destination);
 
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: 'logo' | 'banner' | 'banner_bg'
+    type: 'logo' | 'favicon' | 'banner' | 'banner_bg'
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(type);
     try {
       const res =
-        type === 'logo' ? await uploadLogo(file) : type === 'banner' ? await uploadBanner(file) : await uploadBannerBg(file);
+        type === 'logo'
+          ? await uploadLogo(file)
+          : type === 'favicon'
+            ? await uploadFavicon(file)
+            : type === 'banner'
+              ? await uploadBanner(file)
+              : await uploadBannerBg(file);
       const url = res?.url ?? null;
       if (type === 'logo') setLocalConfig((c) => ({ ...c, logo_url: url }));
+      else if (type === 'favicon') setLocalConfig((c) => ({ ...c, favicon_url: url }));
       else if (type === 'banner') setLocalConfig((c) => ({ ...c, banner_url: url }));
       else setLocalConfig((c) => ({ ...c, banner_bg_url: url }));
     } catch (err) {
@@ -153,6 +214,32 @@ export default function AdminDashboard({
       Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al guardar.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const savePageContent = async () => {
+    setSaving(true);
+    try {
+      await updateConfig({ ...localConfig, page_content: localPageContent });
+      Swal.fire({ icon: 'success', text: 'Textos del sitio guardados.', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false });
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al guardar.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAboutImageUpload = async (file: File) => {
+    setUploadingAbout(true);
+    try {
+      const res = await uploadAboutImage(file);
+      const url = res?.url ?? '';
+      setLocalPageContent((c) => ({ ...c, about: { ...c.about, image_url: url } }));
+      Swal.fire({ icon: 'success', text: 'Imagen de nosotros actualizada.', toast: true, position: 'top-end', timer: 2500, showConfirmButton: false });
+    } catch (err) {
+      Swal.fire({ icon: 'error', text: err instanceof Error ? err.message : 'Error al subir imagen.' });
+    } finally {
+      setUploadingAbout(false);
     }
   };
 
@@ -221,16 +308,15 @@ export default function AdminDashboard({
       const created = await createService({
         title: newService.title.trim(),
         description: newService.description.trim(),
-        icon_type: newService.icon_type,
       });
       setLocalServices((prev) => [...prev, created]);
-      setNewService({ title: '', description: '', icon_type: 'Box' });
+      setNewService({ title: '', description: '' });
     } catch (err) {
       Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al crear servicio.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     }
   };
 
-  const handleUpdateService = async (id: string, data: { title?: string; description?: string; icon_type?: 'Box' | 'Home' | 'Package' }) => {
+  const handleUpdateService = async (id: string, data: { title?: string; description?: string }) => {
     try {
       const updated = await updateService(id, data);
       setLocalServices((prev) => prev.map((s) => (s.id === id ? updated : s)));
@@ -254,12 +340,29 @@ export default function AdminDashboard({
   const handleUploadServiceImage = async (serviceId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploading(`service-${serviceId}`);
+    setUploading(`service-img-${serviceId}`);
     try {
       const res = await uploadServiceImage(serviceId, file);
       setLocalServices((prev) => prev.map((s) => (s.id === serviceId ? res.service : s)));
+      Swal.fire({ icon: 'success', text: 'Imagen actualizada.', toast: true, position: 'top-end', timer: 2500, showConfirmButton: false });
     } catch (err) {
       Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al subir la imagen.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
+    } finally {
+      setUploading(null);
+    }
+    e.target.value = '';
+  };
+
+  const handleUploadServiceIcon = async (serviceId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(`service-icon-${serviceId}`);
+    try {
+      const res = await uploadServiceIcon(serviceId, file);
+      setLocalServices((prev) => prev.map((s) => (s.id === serviceId ? res.service : s)));
+      Swal.fire({ icon: 'success', text: 'Icono actualizado.', toast: true, position: 'top-end', timer: 2500, showConfirmButton: false });
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al subir el icono.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
     } finally {
       setUploading(null);
     }
@@ -431,6 +534,27 @@ export default function AdminDashboard({
     }
   };
 
+  const handleUpdateComplaint = async (id: number, data: { status?: ComplaintStatus; admin_notes?: string | null }) => {
+    try {
+      const updated = await updateComplaint(id, data);
+      setLocalComplaints((prev) => prev.map((c) => (c.id === id ? updated : c)));
+      Swal.fire({ icon: 'success', text: 'Reclamación actualizada.', toast: true, position: 'top-end', timer: 2500, showConfirmButton: false });
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al actualizar.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
+    }
+  };
+
+  const handleDeleteComplaint = async (id: number) => {
+    const res = await Swal.fire({ title: '¿Confirmar acción?', text: '¿Eliminar esta reclamación?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí', cancelButtonText: 'No' });
+    if (!res.isConfirmed) return;
+    try {
+      await deleteComplaint(id);
+      setLocalComplaints((prev) => prev.filter((c) => c.id !== id));
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Error', text: err instanceof Error ? err.message : 'Error al eliminar.', toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
+    }
+  };
+
   const handleDeleteQuote = async (id: number) => {
     const res = await Swal.fire({ title: '¿Confirmar acción?', text: '¿Eliminar esta cotización?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí', cancelButtonText: 'No' });
     if (!res.isConfirmed) return;
@@ -460,6 +584,8 @@ export default function AdminDashboard({
               </span>
               {[
                 { id: 'branding', label: 'Branding & Media', Icon: Palette },
+                { id: 'textos', label: 'Textos del sitio', Icon: Type },
+                { id: 'agencias', label: 'Agencias', Icon: MapPin },
                 { id: 'servicios', label: 'Servicios', Icon: Wrench },
               ].map((tab) => {
                 const Icon = tab.Icon;
@@ -486,6 +612,7 @@ export default function AdminDashboard({
               {[
                 { id: 'cotizador', label: 'Cotizador', Icon: FileText },
                 { id: 'cotizaciones', label: 'Solicitudes de cotización', Icon: Receipt },
+                { id: 'reclamos', label: 'Libro de reclamaciones', Icon: ClipboardList },
               ].map((tab) => {
                 const Icon = tab.Icon;
                 const active = activeTab === tab.id;
@@ -567,6 +694,33 @@ export default function AdminDashboard({
                       </div>
                     </div>
                     <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Favicon</label>
+                      <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border-2 border-dashed border-slate-200">
+                        {localConfig.favicon_url ? (
+                          <img
+                            src={localConfig.favicon_url}
+                            className="h-10 w-10 rounded object-contain bg-white border border-slate-200 p-1"
+                            alt="Favicon"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded bg-white border border-slate-200 flex items-center justify-center text-[10px] text-slate-400 font-bold">
+                            ICO
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <input
+                            type="file"
+                            accept=".ico,.png,.jpg,.jpeg,.webp,.svg"
+                            onChange={(e) => handleFileUpload(e, 'favicon')}
+                            className="text-xs text-slate-600 w-full"
+                            disabled={!!uploading}
+                          />
+                          <p className="text-[10px] text-slate-400 mt-1">ICO, PNG, SVG o WebP. Máx. 2 MB.</p>
+                        </div>
+                        {uploading === 'favicon' && <span className="text-xs text-slate-600">Subiendo…</span>}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
                       <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">
                         Banner (imagen principal hero)
                       </label>
@@ -642,6 +796,21 @@ export default function AdminDashboard({
                       placeholder="Ej. Especialistas en transporte..."
                       className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-emerald-500 outline-none"
                     />
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Color principal</label>
+                    <div className="flex items-center gap-4">
+                      <input
+                        type="color"
+                        value={localConfig.primary_color || '#059669'}
+                        onChange={(e) => setLocalConfig({ ...localConfig, primary_color: e.target.value })}
+                        className="h-12 w-16 rounded-xl border border-slate-200 cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={localConfig.primary_color || '#059669'}
+                        onChange={(e) => setLocalConfig({ ...localConfig, primary_color: e.target.value })}
+                        className="flex-1 bg-slate-50 border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-emerald-500 outline-none font-mono text-sm"
+                      />
+                    </div>
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block mt-6">
                       URL del servicio de rastreo (opcional)
                     </label>
@@ -673,9 +842,44 @@ export default function AdminDashboard({
               </div>
             )}
 
+            {activeTab === 'textos' && (
+              <div className="space-y-8">
+                <h3 className="text-2xl font-black mb-2">Textos del sitio</h3>
+                <p className="text-sm text-slate-500 mb-6">
+                  Edita los encabezados, descripciones y avisos de las secciones públicas. El branding (logo, banner, título hero) está en &quot;Branding &amp; Media&quot;.
+                </p>
+                <PageContentEditor
+                  content={localPageContent}
+                  onChange={setLocalPageContent}
+                  onUploadAbout={handleAboutImageUpload}
+                  uploadingAbout={uploadingAbout}
+                />
+                <button
+                  type="button"
+                  onClick={savePageContent}
+                  disabled={saving}
+                  className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold disabled:opacity-50"
+                >
+                  {saving ? 'Guardando…' : 'Guardar textos'}
+                </button>
+              </div>
+            )}
+
+            {activeTab === 'agencias' && (
+              <div className="space-y-8">
+                <h3 className="text-2xl font-black">Agencias</h3>
+                <AgenciesAdminPanel agencies={localAgencies} onChange={setLocalAgencies} />
+              </div>
+            )}
+
             {activeTab === 'servicios' && (
               <div className="space-y-8">
-                <h3 className="text-2xl font-black">Servicios</h3>
+                <div>
+                  <h3 className="text-2xl font-black">Servicios</h3>
+                  <p className="text-sm text-slate-500 mt-1">
+                    Cada servicio tiene un <b>icono</b> (cuadrado pequeño) y una <b>imagen</b> (portada o banner). Sube ambos archivos después de crear el servicio.
+                  </p>
+                </div>
                 <div className="grid gap-4">
                   {localServices.map((s) => (
                     <div key={s.id} className="bg-slate-50 p-6 rounded-3xl border border-slate-200">
@@ -686,85 +890,89 @@ export default function AdminDashboard({
                           onCancel={() => setEditingServiceId(null)}
                         />
                       ) : (
-                        <>
-                          <div className="flex justify-between items-start gap-4">
-                            <div className="flex gap-4 min-w-0">
-                              <div className="shrink-0 w-20 h-20 rounded-2xl bg-slate-200 overflow-hidden flex items-center justify-center">
+                        <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
+                          <div className="flex gap-4 min-w-0 flex-1">
+                            <div className="flex flex-col gap-3 shrink-0">
+                              <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center">
+                                {s.icon_url ? (
+                                  <img src={s.icon_url} alt="" className="w-full h-full object-contain p-1.5" />
+                                ) : (
+                                  <span className="text-[10px] text-slate-400 font-bold">Icono</span>
+                                )}
+                              </div>
+                              <div className="w-28 h-20 rounded-2xl bg-slate-200 overflow-hidden flex items-center justify-center">
                                 {s.image_url ? (
                                   <img src={s.image_url} alt="" className="w-full h-full object-cover" />
                                 ) : (
-                                  <span className="text-slate-500 text-xs">Sin imagen</span>
+                                  <span className="text-[10px] text-slate-400 font-bold px-2 text-center">Imagen</span>
                                 )}
                               </div>
-                              <div className="min-w-0">
-                                <p className="font-bold text-lg">{s.title}</p>
-                                <p className="text-xs text-slate-600 mt-2 line-clamp-2">{s.description}</p>
-                                <span className="text-[10px] text-slate-500 uppercase mt-2 inline-block">{s.icon_type}</span>
-                              </div>
                             </div>
-                            <div className="flex flex-col gap-2 shrink-0">
-                              <label className="text-[10px] font-bold text-slate-500 uppercase cursor-pointer">
-                                {uploading === `service-${s.id}` ? 'Subiendo…' : 'Subir imagen'}
-                                <input
-                                  type="file"
-                                  accept=".png,.jpg,.jpeg,.webp"
-                                  className="hidden"
-                                  disabled={!!uploading}
-                                  onChange={(e) => handleUploadServiceImage(s.id, e)}
-                                />
-                              </label>
-                              <button
-                                type="button"
-                                onClick={() => setEditingServiceId(s.id)}
-                                className="text-xs font-bold text-emerald-400 hover:underline"
-                              >
-                                Editar
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteService(s.id)}
-                                className="text-xs font-bold text-rose-400 hover:underline"
-                              >
-                                Eliminar
-                              </button>
+                            <div className="min-w-0">
+                              <p className="font-bold text-lg">{s.title}</p>
+                              <p className="text-xs text-slate-600 mt-2 line-clamp-3">{s.description}</p>
                             </div>
                           </div>
-                        </>
+                          <div className="flex flex-col gap-2 shrink-0 w-full lg:w-48">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase cursor-pointer bg-white border border-slate-200 rounded-xl px-3 py-2 text-center hover:border-emerald-400 transition-colors">
+                              {uploading === `service-icon-${s.id}` ? 'Subiendo icono…' : 'Subir icono'}
+                              <input
+                                type="file"
+                                accept=".png,.jpg,.jpeg,.webp,.svg"
+                                className="hidden"
+                                disabled={!!uploading}
+                                onChange={(e) => handleUploadServiceIcon(s.id, e)}
+                              />
+                            </label>
+                            <label className="text-[10px] font-bold text-slate-500 uppercase cursor-pointer bg-white border border-slate-200 rounded-xl px-3 py-2 text-center hover:border-emerald-400 transition-colors">
+                              {uploading === `service-img-${s.id}` ? 'Subiendo imagen…' : 'Subir imagen'}
+                              <input
+                                type="file"
+                                accept=".png,.jpg,.jpeg,.webp"
+                                className="hidden"
+                                disabled={!!uploading}
+                                onChange={(e) => handleUploadServiceImage(s.id, e)}
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => setEditingServiceId(s.id)}
+                              className="text-xs font-bold text-emerald-600 hover:underline text-left px-1"
+                            >
+                              Editar textos
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteService(s.id)}
+                              className="text-xs font-bold text-rose-400 hover:underline text-left px-1"
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+                        </div>
                       )}
                     </div>
                   ))}
                 </div>
                 <div className="bg-slate-50 p-6 rounded-3xl border border-dashed border-slate-200">
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Agregar servicio</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input
-                      type="text"
-                      value={newService.title}
-                      onChange={(e) => setNewService((prev) => ({ ...prev, title: e.target.value }))}
-                      placeholder="Título"
-                      className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                    <select
-                      value={newService.icon_type}
-                      onChange={(e) =>
-                        setNewService((prev) => ({ ...prev, icon_type: e.target.value as 'Box' | 'Home' | 'Package' }))
-                      }
-                      className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
-                    >
-                      {ICON_TYPES.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <input
+                    type="text"
+                    value={newService.title}
+                    onChange={(e) => setNewService((prev) => ({ ...prev, title: e.target.value }))}
+                    placeholder="Título"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
                   <textarea
                     value={newService.description}
                     onChange={(e) => setNewService((prev) => ({ ...prev, description: e.target.value }))}
                     placeholder="Descripción"
                     rows={2}
-                    className="w-full mt-4 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full mt-4 bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
                   />
+                  <p className="text-[10px] text-slate-400 mt-3">
+                    Tras crear el servicio podrás subir el icono y la imagen desde la lista.
+                  </p>
                   <button
                     type="button"
                     onClick={handleCreateService}
@@ -1351,6 +1559,147 @@ export default function AdminDashboard({
               </div>
             )}
 
+            {activeTab === 'reclamos' && (
+              <div className="space-y-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-2xl font-black">Libro de reclamaciones</h3>
+                    <p className="text-sm text-slate-500 mt-1">
+                      Hojas enviadas desde /reclamos. Gestiona el estado y las notas internas de cada caso.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={refreshData}
+                    className="text-xs font-bold text-slate-600 hover:text-emerald-600"
+                  >
+                    Actualizar
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {(['all', 'pendiente', 'en_proceso', 'resuelto'] as const).map((filter) => (
+                    <button
+                      key={filter}
+                      type="button"
+                      onClick={() => setComplaintFilter(filter)}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                        complaintFilter === filter
+                          ? 'bg-rose-600 text-white'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {filter === 'all' ? 'Todas' : COMPLAINT_STATUS_LABELS[filter]}
+                      <span className="ml-2 opacity-70">
+                        (
+                        {filter === 'all'
+                          ? localComplaints.length
+                          : localComplaints.filter((c) => c.status === filter).length}
+                        )
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                {localComplaints.filter((c) => complaintFilter === 'all' || c.status === complaintFilter).length === 0 ? (
+                  <div className="text-center py-20 bg-slate-50/20 rounded-[40px] border border-slate-200">
+                    <p className="text-slate-500">No hay reclamaciones registradas.</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4">
+                    {localComplaints
+                      .filter((c) => complaintFilter === 'all' || c.status === complaintFilter)
+                      .map((c) => (
+                        <div key={c.id} className="bg-slate-50 p-6 rounded-3xl border border-slate-200">
+                          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+                            <div className="flex-grow space-y-3">
+                              <div className="flex flex-wrap items-center gap-3">
+                                <span className="font-mono font-black text-rose-600">{c.code}</span>
+                                <span
+                                  className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border ${COMPLAINT_STATUS_STYLES[c.status]}`}
+                                >
+                                  {COMPLAINT_STATUS_LABELS[c.status]}
+                                </span>
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-white px-3 py-1 rounded-full border border-slate-200">
+                                  {c.tipo}
+                                </span>
+                                {c.created_at && (
+                                  <span className="text-[10px] text-slate-400">
+                                    {new Date(c.created_at).toLocaleDateString('es-PE', {
+                                      day: '2-digit',
+                                      month: 'short',
+                                      year: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="font-bold text-lg text-slate-900">{c.nombre}</p>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600">
+                                <p>📄 {c.documento}</p>
+                                <p>📞 {c.telefono}</p>
+                                <p>✉️ {c.email}</p>
+                                <p className="sm:col-span-2">📍 {c.direccion}</p>
+                              </div>
+                              <div className="bg-white rounded-2xl p-4 border border-slate-100">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                                  Detalle del incidente
+                                </p>
+                                <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{c.detalle}</p>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col gap-4 lg:min-w-[260px]">
+                              <div>
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                                  Estado
+                                </label>
+                                <select
+                                  value={c.status}
+                                  onChange={(e) =>
+                                    handleUpdateComplaint(c.id, { status: e.target.value as ComplaintStatus })
+                                  }
+                                  className="mt-1 w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-rose-500"
+                                >
+                                  <option value="pendiente">Pendiente</option>
+                                  <option value="en_proceso">En proceso</option>
+                                  <option value="resuelto">Resuelto</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                                  Notas internas
+                                </label>
+                                <textarea
+                                  rows={4}
+                                  defaultValue={c.admin_notes ?? ''}
+                                  onBlur={(e) => {
+                                    const notes = e.target.value.trim() || null;
+                                    if (notes !== (c.admin_notes ?? null)) {
+                                      handleUpdateComplaint(c.id, { admin_notes: notes });
+                                    }
+                                  }}
+                                  placeholder="Seguimiento, respuesta dada, etc."
+                                  className="mt-1 w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-rose-500 resize-y"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteComplaint(c.id)}
+                                className="text-xs font-bold text-rose-400 hover:underline text-left"
+                              >
+                                Eliminar
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {activeTab === 'gemini' && (
               <div className="space-y-8">
                 <h3 className="text-2xl font-black">Asistente IA (Gemini o ChatGPT)</h3>
@@ -1551,12 +1900,11 @@ function ServiceEditForm({
   onCancel,
 }: {
   service: ServiceItem;
-  onSave: (data: { title: string; description: string; icon_type: 'Box' | 'Home' | 'Package' }) => void;
+  onSave: (data: { title: string; description: string }) => void;
   onCancel: () => void;
 }) {
   const [title, setTitle] = useState(service.title);
   const [description, setDescription] = useState(service.description);
-  const [icon_type, setIcon_type] = useState<'Box' | 'Home' | 'Package'>(service.icon_type as 'Box' | 'Home' | 'Package');
 
   return (
     <div className="space-y-4">
@@ -1569,24 +1917,13 @@ function ServiceEditForm({
       <textarea
         value={description}
         onChange={(e) => setDescription(e.target.value)}
-        rows={2}
+        rows={3}
         className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
       />
-      <select
-        value={icon_type}
-        onChange={(e) => setIcon_type(e.target.value as 'Box' | 'Home' | 'Package')}
-        className="bg-white border border-slate-200 rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
-      >
-        {ICON_TYPES.map((opt) => (
-          <option key={opt} value={opt}>
-            {opt}
-          </option>
-        ))}
-      </select>
       <div className="flex gap-2">
         <button
           type="button"
-          onClick={() => onSave({ title, description, icon_type })}
+          onClick={() => onSave({ title, description })}
           className="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold text-sm"
         >
           Guardar

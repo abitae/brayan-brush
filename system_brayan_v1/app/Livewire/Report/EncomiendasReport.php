@@ -36,6 +36,11 @@ class EncomiendasReport extends Component
         ['id' => 'Transferencia', 'name' => 'Transferencia'],
         ['id' => 'Tarjeta', 'name' => 'Tarjeta'],
     ];
+    const TIPOS_COMPROBANTE = [
+        ['id' => 'TICKET', 'name' => 'Ticket'],
+        ['id' => 'BOLETA', 'name' => 'Boleta'],
+        ['id' => 'FACTURA', 'name' => 'Factura'],
+    ];
 
     // Propiedades principales
     public string $title = 'REPORTE ENCOMIENDAS';
@@ -49,6 +54,7 @@ class EncomiendasReport extends Component
     public ?string $FiltroEstadoEncomienda = null;
     public ?string $FiltroEstadoPago = null;
     public ?string $filtroMetodoPago = null;
+    public ?string $filtroTipoComprobante = null;
     public int $perPage = self::DEFAULT_PER_PAGE;
 
     public bool $soloSucursalUsuario = false;
@@ -81,11 +87,12 @@ class EncomiendasReport extends Component
      */
     public function resetFilters(): void
     {
-        $this->filtroFechaInicio = Carbon::now()->startOfDay()->format('Y-m-d H:i');
-        $this->filtroFechaFin = $this->dateNow('Y-m-d H:i:s');
+        $this->filtroFechaInicio = $this->filterDateStart();
+        $this->filtroFechaFin = $this->filterDateEnd();
         $this->FiltroEstadoEncomienda = null;
         $this->FiltroEstadoPago = null;
         $this->filtroMetodoPago = null;
+        $this->filtroTipoComprobante = null;
         $this->search = null;
 
         if (! $this->soloSucursalUsuario) {
@@ -109,6 +116,7 @@ class EncomiendasReport extends Component
             'estados' => self::ESTADOS_ENCOMIENDA,
             'estadosPago' => self::ESTADOS_PAGO,
             'metodosPago' => self::METODOS_PAGO,
+            'tiposComprobante' => self::TIPOS_COMPROBANTE,
             'totalRegistros' => $encomiendas->count(),
             'soloSucursalUsuario' => $this->soloSucursalUsuario,
         ]);
@@ -138,8 +146,8 @@ class EncomiendasReport extends Component
         // Aplicar filtro por rango de fechas
         if ($this->filtroFechaInicio && $this->filtroFechaFin) {
             $query->whereBetween('created_at', [
-                $this->filtroFechaInicio,
-                $this->filtroFechaFin
+                $this->parseFilterDateStart($this->filtroFechaInicio),
+                $this->parseFilterDateEnd($this->filtroFechaFin),
             ]);
         }
 
@@ -171,6 +179,11 @@ class EncomiendasReport extends Component
         // Aplicar filtro por método de pago
         if ($this->filtroMetodoPago) {
             $query->where('metodo_pago', $this->filtroMetodoPago);
+        }
+
+        // Aplicar filtro por tipo de comprobante emitido
+        if ($this->filtroTipoComprobante) {
+            $query->where('tipo_comprobante', $this->filtroTipoComprobante);
         }
 
         return $query;
@@ -243,6 +256,16 @@ class EncomiendasReport extends Component
         $this->resetPage();
     }
 
+    public function updatedFiltroFechaInicio(): void
+    {
+        $this->ensureDateRangeOrder($this->filtroFechaInicio, $this->filtroFechaFin);
+    }
+
+    public function updatedFiltroFechaFin(): void
+    {
+        $this->ensureDateRangeOrder($this->filtroFechaInicio, $this->filtroFechaFin);
+    }
+
     /**
      * Actualiza cualquier filtro y reinicia la paginación
      *
@@ -259,6 +282,7 @@ class EncomiendasReport extends Component
             'FiltroEstadoEncomienda',
             'FiltroEstadoPago',
             'filtroMetodoPago',
+            'filtroTipoComprobante',
             'search'
         ])) {
             $this->resetPage();

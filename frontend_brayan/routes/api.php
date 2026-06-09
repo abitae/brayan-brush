@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\CalculatorCityController;
+use App\Http\Controllers\Api\ComplaintController;
+use App\Http\Controllers\Api\AgencyController;
 use App\Http\Controllers\Api\AssistantController;
 use App\Http\Controllers\Api\ConfigController;
 use App\Http\Controllers\Api\PricingRouteController;
@@ -13,6 +15,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/config', [ConfigController::class, 'index']);
 Route::get('/services', [ServiceController::class, 'index']);
+Route::get('/agencies', [AgencyController::class, 'index']);
 Route::get('/prohibited-categories', [ProhibitedCategoryController::class, 'index']);
 Route::get('/pricing-routes', [PricingRouteController::class, 'index']);
 Route::get('/calculator-cities', [CalculatorCityController::class, 'index']);
@@ -21,17 +24,25 @@ Route::post('/tracking', [TrackingController::class, 'store']);
 
 Route::post('/assistant/chat', [AssistantController::class, 'chat']);
 Route::post('/quotes', [QuoteController::class, 'store']);
+Route::post('/complaints', [ComplaintController::class, 'store']);
 
 Route::middleware('auth')->group(function () {
     Route::post('/config', [ConfigController::class, 'update']);
     Route::post('/config/upload-logo', [ConfigController::class, 'uploadLogo']);
+    Route::post('/config/upload-favicon', [ConfigController::class, 'uploadFavicon']);
     Route::post('/config/upload-banner', [ConfigController::class, 'uploadBanner']);
     Route::post('/config/upload-banner-bg', [ConfigController::class, 'uploadBannerBg']);
+    Route::post('/config/upload-about-image', [ConfigController::class, 'uploadAboutImage']);
+
+    Route::post('/agencies', [AgencyController::class, 'store']);
+    Route::put('/agencies/{agency}', [AgencyController::class, 'update']);
+    Route::delete('/agencies/{agency}', [AgencyController::class, 'destroy']);
 
     Route::post('/services', [ServiceController::class, 'store']);
     Route::put('/services/{service}', [ServiceController::class, 'update']);
     Route::delete('/services/{service}', [ServiceController::class, 'destroy']);
     Route::post('/services/{service}/upload-image', [ServiceController::class, 'uploadImage']);
+    Route::post('/services/{service}/upload-icon', [ServiceController::class, 'uploadIcon']);
 
     Route::post('/pricing-routes', [PricingRouteController::class, 'store']);
     Route::put('/pricing-routes/{pricingRoute}', [PricingRouteController::class, 'update']);
@@ -52,4 +63,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/quotes', [QuoteController::class, 'index']);
     Route::put('/quotes/{quote}', [QuoteController::class, 'update']);
     Route::delete('/quotes/{quote}', [QuoteController::class, 'destroy']);
+
+    Route::get('/complaints', [ComplaintController::class, 'index']);
+    Route::put('/complaints/{complaint}', [ComplaintController::class, 'update']);
+    Route::delete('/complaints/{complaint}', [ComplaintController::class, 'destroy']);
 });

@@ -7,7 +7,7 @@ use Illuminate\Support\Collection;
 
 class Service extends Model
 {
-    protected $fillable = ['title', 'description', 'icon_type', 'image_url', 'sort_order'];
+    protected $fillable = ['title', 'description', 'icon_type', 'icon_url', 'image_url', 'sort_order'];
 
     protected $casts = [
         'sort_order' => 'integer',
@@ -16,7 +16,7 @@ class Service extends Model
     /**
      * Formato para páginas públicas (home, servicios): id como string.
      *
-     * @return Collection<int, array{id: string, title: string, description: string, icon_type: string}>
+     * @return Collection<int, array{id: string, title: string, description: string, icon_type: string, icon_url: string|null, image_url: string|null}>
      */
     public static function listForFront(): Collection
     {
@@ -25,6 +25,7 @@ class Service extends Model
             'title' => $s->title,
             'description' => $s->description,
             'icon_type' => $s->icon_type,
+            'icon_url' => $s->icon_url,
             'image_url' => $s->image_url,
         ]);
     }

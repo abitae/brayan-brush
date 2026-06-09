@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Agency;
 use App\Models\CalculatorCity;
 use App\Models\PricingRoute;
 use App\Models\ProhibitedCategory;
@@ -54,6 +55,18 @@ class BrayanBrushSeeder extends Seeder
                 'calculator_default_origin' => 'Lima',
                 'calculator_default_destination' => 'Arequipa',
             ]);
+        }
+
+        if (Agency::count() === 0) {
+            $agencies = [
+                ['name' => 'Sede Central Lima', 'address' => 'Av. Javier Prado Este 1234, San Isidro', 'city' => 'Lima', 'phone' => '+51 1 700 1234', 'lat' => -12.0917, 'lng' => -77.027],
+                ['name' => 'Centro Logístico Callao', 'address' => 'Av. Argentina 4500', 'city' => 'Callao', 'phone' => '+51 1 700 5678', 'lat' => -12.0433, 'lng' => -77.1],
+                ['name' => 'Agencia Arequipa', 'address' => 'Av. Parra 102', 'city' => 'Arequipa', 'phone' => '+51 54 203040', 'lat' => -16.409, 'lng' => -71.5375],
+                ['name' => 'Sede Norte Trujillo', 'address' => 'Av. Larco 880', 'city' => 'Trujillo', 'phone' => '+51 44 304050', 'lat' => -8.116, 'lng' => -79.03],
+            ];
+            foreach ($agencies as $i => $row) {
+                Agency::create([...$row, 'sort_order' => $i, 'is_active' => true]);
+            }
         }
 
         if (PricingRoute::count() > 0) {

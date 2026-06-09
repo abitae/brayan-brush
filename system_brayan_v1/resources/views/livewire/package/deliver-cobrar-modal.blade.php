@@ -86,6 +86,11 @@
                     <x-mary-icon name="s-credit-card" class="text-indigo-500 mr-2" />
                     <h3 class="font-bold text-indigo-700">DETALLE PAGO</h3>
                 </div>
+                @if ($cobroCredito ?? false)
+                    <x-mary-alert icon="o-information-circle" class="alert-info mb-3"
+                        title="Cobro de crédito"
+                        description="Se registrará el pago en caja y la deuda quedará cancelada." />
+                @endif
                 @php
                     $tipo_pagos = [
                         ['id' => 'Contado', 'name' => 'Contado'],
@@ -114,15 +119,25 @@
                             <x-mary-select label="Tipo de comprobante" icon="o-user" :options="$comprobantes"
                                 wire:model.live="tipo_comprobante" class="rounded-r-lg" />
                         </div>
-                        <div>
-                            <x-mary-select label="Tipo pago" icon="o-user" :options="$tipo_pagos"
-                                wire:model.live="tipo_pago" class="rounded-r-lg" />
-                        </div>
-                        @if ($tipo_pago == 'Contado')
+                        @if ($cobroCredito ?? false)
+                            <div>
+                                <x-mary-input label="Tipo pago" value="Contado (cobro de crédito)" readonly />
+                            </div>
                             <div>
                                 <x-mary-select label="Metodo de pago" icon="o-user" :options="$metodoPagos"
                                     wire:model.live="metodo_pago" class="rounded-r-lg" />
                             </div>
+                        @else
+                            <div>
+                                <x-mary-select label="Tipo pago" icon="o-user" :options="$tipo_pagos"
+                                    wire:model.live="tipo_pago" class="rounded-r-lg" />
+                            </div>
+                            @if ($tipo_pago == 'Contado')
+                                <div>
+                                    <x-mary-select label="Metodo de pago" icon="o-user" :options="$metodoPagos"
+                                        wire:model.live="metodo_pago" class="rounded-r-lg" />
+                                </div>
+                            @endif
                         @endif
                         @if ($tipo_comprobante == 'TICKET')
                             <div>

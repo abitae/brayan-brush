@@ -12,83 +12,122 @@ use App\Traits\LogCustom;
 use App\Traits\SearchDocument;
 use App\Traits\UtilsTrait;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
 use Mary\Traits\Toast;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Auth;
 
 class EncomiendaCobrar extends Component
 {
     use Toast, UtilsTrait, WithPagination, WithoutUrlPagination;
     use CajaTrait, SearchDocument;
     use InvoiceTrait, LogCustom;
-    // Constantes para valores predeterminados y opciones
+
     const DEFAULT_PER_PAGE = 10;
+
     const ESTADOS_ENCOMIENDA = [
         ['id' => 'REGISTRADO', 'name' => 'REGISTRADO'],
         ['id' => 'ENVIADO', 'name' => 'ENVIADO'],
         ['id' => 'RECIBIDO', 'name' => 'RECIBIDO'],
-        ['id' => 'ENTREGADO', 'name' => 'ENTREGADO']
+        ['id' => 'ENTREGADO', 'name' => 'ENTREGADO'],
     ];
+
     const ESTADOS_CREDITO = [
         ['id' => 'Pendiente', 'name' => 'PENDIENTE'],
         ['id' => 'Cancelado', 'name' => 'CANCELADO'],
     ];
+
     const METODOS_PAGO = [
         ['id' => 'Efectivo', 'name' => 'Efectivo'],
+        ['id' => 'Yape', 'name' => 'Yape'],
         ['id' => 'Transferencia', 'name' => 'Transferencia'],
         ['id' => 'Tarjeta', 'name' => 'Tarjeta'],
+        ['id' => 'Deposito', 'name' => 'Deposito'],
     ];
-    public $title = 'CUENTAS POR COBRAR';
-    public $sub_title = 'Cuentas por cobrar';
-    // Propiedades para filtros
+
+    public string $title = 'CUENTAS POR COBRAR';
+
+    public string $sub_title = 'Cobro de encomiendas registradas a crédito';
+
+    public bool $cobroCredito = true;
+
     public ?int $filtroSucursal = null;
+
     public ?string $filtroFechaInicio = null;
+
     public ?string $filtroFechaFin = null;
+
     public ?string $search = null;
+
     public ?string $FiltroEstadoEncomienda = null;
+
     public ?string $FiltroEstadoCredito = 'Pendiente';
+
     public ?string $filtroMetodoPago = null;
+
     public int $perPage = self::DEFAULT_PER_PAGE;
 
-    // Propiedades para la interfaz
     public bool $showDrawer = false;
+
     public array $ids = [];
+
     public Encomienda $encomienda;
+
     public $cliFacturacion;
-    public $cliFacturacion_type_code;
+
+    public $cliFacturacion_type_code = '1';
+
     public $cliFacturacion_code;
+
     public $cliFacturacion_name;
+
     public $cliFacturacion_address;
+
     public $cliFacturacion_phone;
+
     public $cliFacturacion_ubigeo;
+
     public $monto_descuento;
+
     public $motivo_descuento;
-    public $tipo_pago = 'Contado';
-    public $tipo_comprobante = 'TICKET';
-    public $metodo_pago = 'Efectivo';
-    public $modalCobrar = false;
+
+    public string $tipo_pago = 'Contado';
+
+    public string $tipo_comprobante = 'TICKET';
+
+    public string $metodo_pago = 'Efectivo';
+
+    public bool $modalCobrar = false;
+
     public function mount(): void
     {
         $this->resetFilters();
+
+        if (! $this->cajaIsActive(Auth::user())) {
+            $this->warning('Debe abrir caja antes de cobrar encomiendas');
+            $this->redirectRoute('caja.index');
+        }
     }
+
     public function resetFilters(): void
     {
-        $this->filtroFechaInicio = Carbon::now()->startOfDay()->format('Y-m-d H:i');
-        $this->filtroFechaFin = $this->dateNow('Y-m-d H:i:s');
+        $this->filtroFechaInicio = $this->filterDateStart();
+        $this->filtroFechaFin = $this->filterDateEnd();
         $this->FiltroEstadoEncomienda = null;
         $this->FiltroEstadoCredito = 'Pendiente';
         $this->filtroMetodoPago = null;
         $this->filtroSucursal = null;
         $this->search = null;
     }
+
     public function render()
     {
         $encomiendas = $this->getEncomiendasQuery();
         $this->ids = $encomiendas->pluck('id')->toArray();
+
         return view('livewire.cobrar.encomienda-cobrar', [
             'encomiendas' => $encomiendas->latest()->paginate($this->perPage),
             'sucursals' => $this->getSucursales(),
@@ -98,29 +137,25 @@ class EncomiendaCobrar extends Component
             'totalRegistros' => $encomiendas->count(),
         ]);
     }
-    /**
-     * Obtiene la consulta base de encomiendas con filtros aplicados
-     *
-     * @return Builder
-     */
+
     private function getEncomiendasQuery(): Builder
     {
-        $query = Encomienda::query();
+        $query = Encomienda::query()
+            ->where('tipo_pago', 'Credito')
+            ->where('isActive', true)
+            ->with(['remitente', 'destinatario', 'invoice', 'ticket', 'despatche']);
 
-        // Aplicar filtro por sucursal
         if ($this->filtroSucursal) {
             $query->where('sucursal_id', $this->filtroSucursal);
         }
 
-        // Aplicar filtro por rango de fechas
         if ($this->filtroFechaInicio && $this->filtroFechaFin) {
             $query->whereBetween('created_at', [
-                $this->filtroFechaInicio,
-                $this->filtroFechaFin
+                $this->parseFilterDateStart($this->filtroFechaInicio),
+                $this->parseFilterDateEnd($this->filtroFechaFin),
             ]);
         }
 
-        // Aplicar búsqueda global
         if ($this->search) {
             $query->where(function (Builder $query) {
                 $query->where('code', 'like', '%' . $this->search . '%')
@@ -135,17 +170,14 @@ class EncomiendaCobrar extends Component
             });
         }
 
-        // Aplicar filtro por estado de encomienda
         if ($this->FiltroEstadoEncomienda) {
             $query->where('estado_encomienda', $this->FiltroEstadoEncomienda);
         }
 
-        // Aplicar filtro por estado de pago
         if ($this->FiltroEstadoCredito) {
             $query->where('estado_credito', $this->FiltroEstadoCredito);
         }
 
-        // Aplicar filtro por método de pago
         if ($this->filtroMetodoPago) {
             $query->where('metodo_pago', $this->filtroMetodoPago);
         }
@@ -153,34 +185,17 @@ class EncomiendaCobrar extends Component
         return $query;
     }
 
-    /**
-     * Obtiene las sucursales activas
-     *
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
     private function getSucursales()
     {
         return Sucursal::where('isActive', true)->get();
     }
 
-    /**
-     * Muestra el detalle de una encomienda
-     *
-     * @param Encomienda $encomienda
-     * @return void
-     */
     public function showEncomienda(Encomienda $encomienda): void
     {
         $this->encomienda = $encomienda;
         $this->showDrawer = true;
     }
 
-    /**
-     * Redirige a la creación de boleta/factura
-     *
-     * @param Encomienda $encomienda
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function createBoleta(Encomienda $encomienda)
     {
         return $this->redirectRoute(
@@ -191,42 +206,35 @@ class EncomiendaCobrar extends Component
         );
     }
 
-    /**
-     * Genera y descarga el reporte en Excel
-     *
-     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
-     */
     public function excelGenerate()
     {
         if (empty($this->ids)) {
             $this->warning('No hay datos para exportar');
+
             return null;
         }
 
-        $filename = 'reporte_encomiendas_' . Carbon::now()->format('Ymd_His') . '.xlsx';
+        $filename = 'reporte_cuentas_por_cobrar_' . Carbon::now()->format('Ymd_His') . '.xlsx';
         $this->success('Reporte generado con éxito');
 
         return Excel::download(new ReportEncomiendaExport($this->ids), $filename);
     }
 
-    /**
-     * Actualiza la cantidad de registros por página
-     *
-     * @param int $value
-     * @return void
-     */
     public function updatedPerPage($value): void
     {
         $this->resetPage();
     }
 
-    /**
-     * Actualiza cualquier filtro y reinicia la paginación
-     *
-     * @param mixed $value
-     * @param string $property
-     * @return void
-     */
+    public function updatedFiltroFechaInicio(): void
+    {
+        $this->ensureDateRangeOrder($this->filtroFechaInicio, $this->filtroFechaFin);
+    }
+
+    public function updatedFiltroFechaFin(): void
+    {
+        $this->ensureDateRangeOrder($this->filtroFechaInicio, $this->filtroFechaFin);
+    }
+
     public function updated($property): void
     {
         if (in_array($property, [
@@ -236,91 +244,191 @@ class EncomiendaCobrar extends Component
             'FiltroEstadoEncomienda',
             'FiltroEstadoCredito',
             'filtroMetodoPago',
-            'search'
-        ])) {
+            'search',
+        ], true)) {
             $this->resetPage();
         }
     }
-    public function modalCobrarOpen(Encomienda $encomienda)
+
+    public function modalCobrarOpen(Encomienda $encomienda): void
     {
+        $encomienda->load(['remitente', 'destinatario', 'facturacion', 'ticket', 'invoice']);
+
+        if ($encomienda->tipo_pago !== 'Credito') {
+            $this->warning('Esta encomienda no fue registrada a crédito');
+
+            return;
+        }
+
+        if ($encomienda->estado_credito !== 'Pendiente') {
+            $this->warning('Esta encomienda ya fue cobrada');
+
+            return;
+        }
+
+        $this->resetModalCobro();
         $this->encomienda = $encomienda;
-        $this->cliFacturacion = $this->encomienda->facturacion;
-        $this->cliFacturacion_type_code = $this->encomienda->facturacion->type_code == 'dni' ? 1 : 6;
-        $this->cliFacturacion_code = $this->encomienda->facturacion->code;
-        $this->cliFacturacion_name = $this->encomienda->facturacion->name;
-        $this->cliFacturacion_address = $this->encomienda->facturacion->address;
-        $this->cliFacturacion_phone = $this->encomienda->facturacion->phone;
-        $this->cliFacturacion_ubigeo = $this->encomienda->facturacion->ubigeo;
+        $this->tipo_comprobante = $encomienda->tipo_comprobante ?: 'TICKET';
+        $this->tipo_pago = 'Contado';
+        $this->metodo_pago = $encomienda->metodo_pago ?: 'Efectivo';
+
+        $facturacion = $encomienda->facturacion ?? $encomienda->remitente;
+        $this->cliFacturacion = $facturacion;
+        $this->cliFacturacion_type_code = $this->resolveCustomerTypeCode($facturacion);
+        $this->cliFacturacion_code = $facturacion->code;
+        $this->cliFacturacion_name = $facturacion->name;
+        $this->cliFacturacion_address = $facturacion->address;
+        $this->cliFacturacion_phone = $facturacion->phone;
+        $this->cliFacturacion_ubigeo = $facturacion->ubigeo;
         $this->modalCobrar = true;
     }
-    public function cobrarEncomienda()
+
+    public function cobrarEncomienda(): void
     {
-        if ($this->tipo_comprobante == 'TICKET') {
-            $this->cliFacturacion = $this->encomienda->facturacion;
-            if (is_numeric($this->monto_descuento) && $this->monto_descuento < $this->encomienda->monto) {
-                $this->descuentoCreate();
-            }
-        }
-        if ($this->tipo_comprobante == 'FACTURA' && $this->cliFacturacion_type_code != '6') {
-            $this->error('Ops', 'El cliente de Facturacion debe ser un RUC!');
+        if ($this->encomienda->tipo_pago !== 'Credito') {
+            $this->error('Ops', 'La encomienda no es a crédito');
+
             return;
         }
+
+        if ($this->encomienda->estado_credito !== 'Pendiente') {
+            $this->error('Ops', 'La encomienda ya fue cobrada');
+
+            return;
+        }
+
+        $caja = $this->cajaIsActive(Auth::user());
+        if (! $caja) {
+            $this->error('Ops', 'No tiene una caja abierta');
+
+            return;
+        }
+
+        if ($this->tipo_comprobante === 'TICKET') {
+            $this->cliFacturacion = $this->encomienda->facturacion ?? $this->encomienda->remitente;
+        }
+
+        if ($this->tipo_comprobante === 'FACTURA' && $this->cliFacturacion_type_code != '6') {
+            $this->error('Ops', 'El cliente de facturación debe tener RUC');
+
+            return;
+        }
+
         $rules = [
-            'cliFacturacion' => 'required',
             'tipo_comprobante' => 'required',
-            'tipo_pago' => 'required',
             'metodo_pago' => 'required',
         ];
-        $message = [
-            'cliFacturacion.required' => 'El cliente de facturacion es requerido',
+
+        $messages = [
             'tipo_comprobante.required' => 'El tipo de comprobante es requerido',
-            'tipo_pago.required' => 'El tipo de pago es requerido',
             'metodo_pago.required' => 'El método de pago es requerido',
         ];
-        $this->validate($rules, $message);
+
+        if ($this->tipo_comprobante !== 'TICKET') {
+            $rules['cliFacturacion'] = 'required';
+            $messages['cliFacturacion.required'] = 'El cliente de facturación es requerido';
+        }
+
+        if ($this->monto_descuento !== null && $this->monto_descuento !== '') {
+            $rules['monto_descuento'] = 'numeric|min:0|lt:' . $this->encomienda->monto;
+            $messages['monto_descuento.lt'] = 'El descuento debe ser menor al monto de la encomienda';
+        }
+
+        $this->validate($rules, $messages);
+
+        if ($this->tipo_comprobante === 'TICKET'
+            && is_numeric($this->monto_descuento)
+            && $this->monto_descuento > 0
+            && $this->monto_descuento < $this->encomienda->monto) {
+            $this->descuentoCreate($caja);
+        }
+
         $this->encomienda->customer_fact_id = $this->cliFacturacion->id;
         $this->encomienda->tipo_comprobante = $this->tipo_comprobante;
-        $this->encomienda->tipo_pago = $this->tipo_pago;
+        $this->encomienda->tipo_pago = 'Contado';
         $this->encomienda->metodo_pago = $this->metodo_pago;
-        $this->encomienda->estado_encomienda = 'ENTREGADO';
+        $this->encomienda->estado_credito = 'Cancelado';
 
-        if ($this->tipo_pago == 'Contado') {
-            $this->cajaEntry(
-                $this->cajaIsActive(Auth::user())->id,
-                $this->encomienda->monto,
-                'ENTREGA ' . $this->encomienda->tipo_comprobante,
-                $this->metodo_pago,
-                $this->encomienda->code
-            );
-            $this->encomienda->estado_credito = 'Cancelado';
-        } else {
-            return;
+        if ($this->encomienda->estado_encomienda !== 'ENTREGADO') {
+            $this->encomienda->estado_encomienda = 'ENTREGADO';
+            $this->encomienda->fecha_entrega = $this->encomienda->fecha_entrega ?? Carbon::now();
         }
+
+        $montoCobrar = (float) $this->encomienda->monto - (float) ($this->encomienda->monto_descuento ?? 0);
+
+        $this->cajaEntry(
+            $caja->id,
+            $montoCobrar,
+            'COBRO CREDITO ' . $this->encomienda->tipo_comprobante,
+            $this->metodo_pago,
+            $this->encomienda->code
+        );
+
         $this->encomienda->save();
-        if ($this->tipo_comprobante != 'TICKET') {
-            $this->setInvoice($this->encomienda, $this->tipo_comprobante);
+
+        if ($this->encomienda->ticket) {
+            $this->encomienda->ticket->formaPago_tipo = 'Contado';
+            $this->encomienda->ticket->save();
         }
+
+        if ($this->tipo_comprobante !== 'TICKET') {
+            if (! $this->encomienda->invoice) {
+                $this->setInvoice($this->encomienda, $this->tipo_comprobante);
+            } else {
+                $this->encomienda->invoice->formaPago_tipo = 'Contado';
+                $this->encomienda->invoice->save();
+            }
+        }
+
+        $this->infoLog('COBRO CREDITO ' . $this->encomienda->code);
+        $this->success('Cobro registrado correctamente');
         $this->modalCobrar = false;
+        $this->resetModalCobro();
     }
-    private function descuentoCreate()
+
+    private function descuentoCreate($caja): void
     {
         $this->encomienda->monto_descuento = $this->monto_descuento;
+        $this->encomienda->motivo_descuento = $this->motivo_descuento;
         $this->encomienda->save();
+
         if ($this->encomienda->ticket) {
             $this->encomienda->ticket->monto_descuento = $this->monto_descuento;
             $this->encomienda->ticket->save();
         }
+
         $this->cajaExit(
-            $this->cajaIsActive(Auth::user())->id,
-            $this->monto_descuento,
-            ' DESCUENTO ' . $this->tipo_comprobante,
+            $caja->id,
+            (float) $this->monto_descuento,
+            'DESCUENTO ' . $this->tipo_comprobante,
             $this->metodo_pago,
             $this->encomienda->code
         );
     }
-    public function searchFacturacion()
-    {
 
+    private function resetModalCobro(): void
+    {
+        $this->monto_descuento = null;
+        $this->motivo_descuento = null;
+        $this->tipo_pago = 'Contado';
+        $this->tipo_comprobante = 'TICKET';
+        $this->metodo_pago = 'Efectivo';
+        $this->cliFacturacion = null;
+        $this->cliFacturacion_type_code = '1';
+        $this->cliFacturacion_code = null;
+        $this->cliFacturacion_name = null;
+        $this->cliFacturacion_address = null;
+        $this->cliFacturacion_phone = null;
+        $this->cliFacturacion_ubigeo = null;
+    }
+
+    private function resolveCustomerTypeCode(Customer $customer): string
+    {
+        return in_array((string) $customer->type_code, ['6', 'ruc', 'RUC'], true) ? '6' : '1';
+    }
+
+    public function searchFacturacion(): void
+    {
         $rules = [
             'cliFacturacion_type_code' => 'required',
             'cliFacturacion_code' => 'required|min:8|max:11',
@@ -328,32 +436,39 @@ class EncomiendaCobrar extends Component
         $messages = [
             'cliFacturacion_type_code.required' => 'El tipo de documento es requerido',
             'cliFacturacion_code.required' => 'El número de documento es requerido',
-            'cliFacturacion_code.min' => 'El número de documento debe tener 8 dígitos',
-            'cliFacturacion_code.max' => 'El número de documento debe tener 11 dígitos',
+            'cliFacturacion_code.min' => 'El número de documento debe tener al menos 8 dígitos',
+            'cliFacturacion_code.max' => 'El número de documento debe tener máximo 11 dígitos',
         ];
         $this->validate($rules, $messages);
+
         $cliFacturacion = Customer::where('type_code', $this->cliFacturacion_type_code)
             ->where('code', $this->cliFacturacion_code)
             ->first();
+
         if ($cliFacturacion) {
             $this->cliFacturacion = $cliFacturacion;
             $this->cliFacturacion_name = $cliFacturacion->name;
             $this->cliFacturacion_address = $cliFacturacion->address;
             $this->cliFacturacion_phone = $cliFacturacion->phone;
             $this->cliFacturacion_ubigeo = $cliFacturacion->ubigeo;
+
             return;
         }
+
         $tipo = $this->cliFacturacion_type_code == '6' ? 'ruc' : 'dni';
         $respuesta = $this->searchComplete($tipo, $this->cliFacturacion_code);
-        if (!$respuesta['encontrado']) {
+
+        if (! $respuesta['encontrado']) {
             $this->cliFacturacion = null;
             $this->cliFacturacion_name = '';
             $this->cliFacturacion_address = '';
             $this->cliFacturacion_phone = '';
             $this->cliFacturacion_ubigeo = '';
-            $this->error('El cliente de Facturacion no existe!, verifique el número de documento!');
+            $this->error('El cliente de facturación no existe, verifique el número de documento');
+
             return;
         }
+
         if ($tipo == 'ruc') {
             $this->cliFacturacion_name = $respuesta['data']->razon_social;
             $this->cliFacturacion_address = $respuesta['data']->direccion;
@@ -367,12 +482,12 @@ class EncomiendaCobrar extends Component
         $this->cliFacturacion = Customer::firstOrCreate(
             [
                 'type_code' => $this->cliFacturacion_type_code,
-                'code' => $this->cliFacturacion_code
+                'code' => $this->cliFacturacion_code,
             ],
             [
                 'name' => $this->cliFacturacion_name,
                 'address' => $this->cliFacturacion_address,
-                'ubigeo' => $this->cliFacturacion_ubigeo
+                'ubigeo' => $this->cliFacturacion_ubigeo,
             ]
         );
     }

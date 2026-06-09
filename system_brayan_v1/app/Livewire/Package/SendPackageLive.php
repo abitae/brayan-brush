@@ -67,8 +67,8 @@ class SendPackageLive extends Component
     public function mount()
     {
         $this->date_traslado = Carbon::now()->endOfDay()->format('Y-m-d H:i');
-        $this->date_ini = Carbon::now()->startOfDay()->format('Y-m-d H:i');//$this->dateNow('Y-m-d');
-        $this->date_fin = $this->dateNow('Y-m-d H:i:s');
+        $this->date_ini = $this->filterDateStart();
+        $this->date_fin = $this->filterDateEnd();
 
         $p = SucursalConfiguration::where('isActive', true)
             ->where('sucursal_id', Auth::user()->sucursal->id)
@@ -84,6 +84,17 @@ class SendPackageLive extends Component
             ->id;
         $this->paquetes = collect([])->keyBy('id');
     }
+
+    public function updatedDateIni(): void
+    {
+        $this->ensureDateRangeOrder($this->date_ini, $this->date_fin);
+    }
+
+    public function updatedDateFin(): void
+    {
+        $this->ensureDateRangeOrder($this->date_ini, $this->date_fin);
+    }
+
     public function render()
     {
         $p = SucursalConfiguration::where('isActive', true)
@@ -106,8 +117,8 @@ class SendPackageLive extends Component
         $encomiendas = Encomienda::query()
             ->when($this->date_ini && $this->date_fin, function($query) {
                 $query->whereBetween('created_at', [
-                    Carbon::parse($this->date_ini)->startOfDay(),
-                    Carbon::parse($this->date_fin)->endOfDay()
+                    $this->parseFilterDateStart($this->date_ini),
+                    $this->parseFilterDateEnd($this->date_fin),
                 ]);
             })
             ->where([

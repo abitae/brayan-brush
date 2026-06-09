@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { getPricingRoutes } from '@/api/brayan-api';
 import type { PricingRouteItem } from '@/api/brayan-api';
 import { ICONS } from '@/constants/brayan';
+import { usePageContent } from '@/hooks/use-page-content';
 
 export interface CalculatorCityOption {
   id: number;
@@ -44,6 +45,7 @@ export default function CalculatorSection({
   calculatorDefaults,
   calculatorCities = [],
 }: CalculatorSectionProps) {
+  const calculatorContent = usePageContent().calculator;
   const defaults = calculatorDefaults ?? {};
   const [pricingRoutes, setPricingRoutes] = useState<PricingRouteItem[]>([]);
   const [routesLoaded, setRoutesLoaded] = useState(false);
@@ -186,14 +188,24 @@ export default function CalculatorSection({
       <div className="max-w-7xl mx-auto px-4 relative z-10">
         <div className="text-center mb-20">
           <span className="inline-block px-4 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-black uppercase tracking-widest mb-4">
-            Cotizador Inteligente
+            {calculatorContent.eyebrow}
           </span>
           <h2 className="text-5xl md:text-6xl font-black text-slate-900 mb-6 tracking-tight">
-            Calcula el costo de tu <span className="text-emerald-600">envío</span>
+            {calculatorContent.title.includes(calculatorContent.title_highlight) ? (
+              calculatorContent.title.split(calculatorContent.title_highlight).map((part, i, arr) => (
+                <span key={i}>
+                  {part}
+                  {i < arr.length - 1 && <span className="text-emerald-600">{calculatorContent.title_highlight}</span>}
+                </span>
+              ))
+            ) : (
+              <>
+                {calculatorContent.title}{' '}
+                <span className="text-emerald-600">{calculatorContent.title_highlight}</span>
+              </>
+            )}
           </h2>
-          <p className="text-slate-500 max-w-2xl mx-auto text-lg">
-            Obtén una tarifa inmediata basada en peso real o dimensiones volumétricas.
-          </p>
+          <p className="text-slate-500 max-w-2xl mx-auto text-lg">{calculatorContent.subtitle}</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">

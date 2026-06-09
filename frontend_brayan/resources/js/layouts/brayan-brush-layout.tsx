@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import type { PropsWithChildren } from 'react';
+import type { CSSProperties, PropsWithChildren } from 'react';
 import { ICONS } from '@/constants/brayan';
 import SmartAssistant from '@/components/brayan-brush/SmartAssistant';
 import { logout } from '@/routes';
@@ -15,11 +15,14 @@ export default function BrayanBrushLayout({ children }: PropsWithChildren) {
   const { url } = usePage();
   const path = url === '/' ? 'inicio' : url.replace(/^\//, '').split('?')[0];
   const isAdmin = path === 'admin';
-  const siteConfig = (usePage().props.siteConfig as SiteConfigShared | null) ?? {
+  const siteConfig = (usePage().props.siteConfig as (SiteConfigShared & { primary_color?: string; page_content?: { footer?: { description?: string; copyright_suffix?: string } } }) | null) ?? {
     company_name: 'Brayan Brush',
     logo_text: 'Corporación Logística',
     logo_url: null,
+    primary_color: '#059669',
+    page_content: undefined,
   };
+  const footerContent = siteConfig.page_content?.footer;
   const auth = usePage().props.auth as { user: unknown } | undefined;
   const isAuth = Boolean(auth?.user);
 
@@ -34,7 +37,10 @@ export default function BrayanBrushLayout({ children }: PropsWithChildren) {
   const TruckIcon = ICONS.Truck;
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div
+      className="min-h-screen flex flex-col bg-white"
+      style={{ '--brand': siteConfig.primary_color ?? '#059669' } as CSSProperties}
+    >
       <header className="fixed top-0 left-0 right-0 z-50 border-b bg-white/80 border-slate-200 text-slate-900 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
@@ -91,31 +97,6 @@ export default function BrayanBrushLayout({ children }: PropsWithChildren) {
               >
                 Cotizar
               </Link>
-              {isAuth ? (
-                <>
-                  <Link
-                    href="/admin"
-                    className="px-5 py-2.5 rounded-full font-black text-sm bg-emerald-600 text-white hover:bg-emerald-500"
-                  >
-                    Panel Admin
-                  </Link>
-                  <Link
-                    href={logout().url}
-                    method="post"
-                    as="button"
-                    className="px-5 py-2.5 rounded-full font-black text-sm border-2 border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors"
-                  >
-                    Cerrar sesión
-                  </Link>
-                </>
-              ) : (
-                <Link
-                  href="/login"
-                  className="px-5 py-2.5 rounded-full font-black text-sm border-2 border-slate-200 text-slate-600 hover:border-slate-900 hover:text-slate-900"
-                >
-                  Iniciar sesión
-                </Link>
-              )}
             </div>
           </nav>
         </div>
@@ -130,7 +111,7 @@ export default function BrayanBrushLayout({ children }: PropsWithChildren) {
             : 'bg-slate-900 text-white pt-20 pb-10'
         }
       >
-        <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-16">
+        <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-16">
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               {siteConfig.logo_url ? (
@@ -147,7 +128,7 @@ export default function BrayanBrushLayout({ children }: PropsWithChildren) {
               <span className="text-2xl font-black tracking-tight">{siteConfig.company_name}</span>
             </div>
             <p className={isAdmin ? 'text-slate-600 text-sm' : 'text-slate-400 text-sm leading-relaxed font-medium'}>
-              Liderazgo y tecnología en transporte terrestre nacional peruano. Conectando regiones con seguridad.
+              {footerContent?.description ?? 'Liderazgo y tecnología en transporte terrestre nacional peruano. Conectando regiones con seguridad.'}
             </p>
           </div>
 
@@ -184,36 +165,44 @@ export default function BrayanBrushLayout({ children }: PropsWithChildren) {
             </ul>
           </div>
 
-          <div>
-            <h4 className="font-black mb-8 text-emerald-600 uppercase tracking-widest text-xs">Gestión</h4>
-            <Link
-              href={isAuth ? '/admin' : '/login'}
-              className="block w-full bg-emerald-600 text-white py-4 rounded-2xl hover:bg-emerald-500 transition-all text-xs font-black uppercase tracking-widest shadow-lg text-center"
-            >
-              Panel Administrativo
-            </Link>
-            {isAuth && (
-              <Link
-                href={logout().url}
-                method="post"
-                as="button"
-                className="block w-full mt-3 py-3 rounded-2xl border-2 border-slate-300 text-slate-600 hover:border-slate-400 hover:bg-slate-100 text-xs font-black uppercase tracking-widest text-center transition-colors"
-              >
-                Cerrar sesión
-              </Link>
-            )}
-            <p className="text-[10px] text-slate-500 mt-4 text-center font-bold">Brayan Brush - Laravel</p>
-          </div>
         </div>
         <div
           className={`max-w-7xl mx-auto px-4 mt-20 pt-8 border-t text-[10px] font-black uppercase tracking-widest flex flex-col md:flex-row justify-between items-center text-center ${
             isAdmin ? 'border-slate-300 text-slate-500' : 'border-slate-800 text-slate-500'
           }`}
         >
-          <p>© 2024 {siteConfig.company_name} - Corporación Logística Perú. All rights reserved.</p>
-          <div className="flex gap-8 mt-4 md:mt-0">
-            <span>Cloud Infrastructure</span>
-            <span>Security Validated</span>
+          <p>© {new Date().getFullYear()} {siteConfig.company_name} - {footerContent?.copyright_suffix ?? 'Corporación Logística Perú. All rights reserved.'}</p>
+          <div className="flex flex-col items-center gap-2 mt-4 md:mt-0 md:items-end">
+            <div className="flex gap-8">
+              <span>Cloud Infrastructure</span>
+              <span>Security Validated</span>
+            </div>
+            <div
+              className={`flex items-center gap-3 text-[9px] font-medium normal-case tracking-normal ${
+                isAdmin ? 'text-slate-400' : 'text-slate-600'
+              }`}
+            >
+              {isAuth ? (
+                <>
+                  <Link href="/admin" className="opacity-50 hover:opacity-100 hover:text-emerald-500 transition-all">
+                    Panel
+                  </Link>
+                  <span className="opacity-30">·</span>
+                  <Link
+                    href={logout().url}
+                    method="post"
+                    as="button"
+                    className="opacity-50 hover:opacity-100 hover:text-emerald-500 transition-all"
+                  >
+                    Cerrar sesión
+                  </Link>
+                </>
+              ) : (
+                <Link href="/login" className="opacity-50 hover:opacity-100 hover:text-emerald-500 transition-all">
+                  Iniciar sesión
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </footer>

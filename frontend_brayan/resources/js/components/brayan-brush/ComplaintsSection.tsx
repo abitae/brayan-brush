@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { useState } from 'react';
+import { submitComplaint } from '@/api/brayan-api';
 
 export default function ComplaintsSection() {
   const [formData, setFormData] = useState({
@@ -12,11 +13,38 @@ export default function ComplaintsSection() {
     detalle: '',
   });
   const [submitted, setSubmitted] = useState(false);
+  const [complaintCode, setComplaintCode] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      const res = await submitComplaint(formData);
+      setComplaintCode(res.code);
+      setSubmitted(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo registrar la reclamación.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleReset = () => {
+    setSubmitted(false);
+    setComplaintCode('');
+    setFormData({
+      nombre: '',
+      documento: '',
+      telefono: '',
+      email: '',
+      direccion: '',
+      tipo: 'Queja',
+      detalle: '',
+    });
   };
 
   if (submitted) {
@@ -28,12 +56,12 @@ export default function ComplaintsSection() {
         <h2 className="text-4xl font-black text-slate-900 mb-4 tracking-tight">Registro Exitoso</h2>
         <p className="text-slate-600 max-w-md mx-auto text-lg mb-10">
           Su reclamo ha sido registrado con el código{' '}
-          <span className="font-mono font-bold text-rose-600">LR-{Math.floor(Math.random() * 100000)}</span>. Le
-          responderemos en el plazo establecido por ley.
+          <span className="font-mono font-bold text-rose-600">{complaintCode}</span>. Le responderemos en el plazo
+          establecido por ley.
         </p>
         <button
           type="button"
-          onClick={() => setSubmitted(false)}
+          onClick={handleReset}
           className="bg-slate-900 text-white px-8 py-3 rounded-2xl font-bold hover:bg-slate-800 transition-all"
         >
           Volver al formulario
@@ -67,6 +95,11 @@ export default function ComplaintsSection() {
         </div>
 
         <div className="bg-white border-x border-b border-slate-100 shadow-2xl rounded-b-[20px] p-8 md:p-12">
+          {error && (
+            <div className="mb-8 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm font-medium">
+              {error}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-12">
             <div>
               <h3 className="text-xl font-bold text-slate-800 mb-8 flex items-center gap-2">
@@ -156,10 +189,11 @@ export default function ComplaintsSection() {
               </p>
               <button
                 type="submit"
-                className="w-full md:w-auto bg-rose-600 text-white px-12 py-5 rounded-2xl font-black text-lg hover:bg-rose-500 transition-all shadow-xl shadow-rose-200 flex items-center justify-center gap-3"
+                disabled={isSubmitting}
+                className="w-full md:w-auto bg-rose-600 text-white px-12 py-5 rounded-2xl font-black text-lg hover:bg-rose-500 transition-all shadow-xl shadow-rose-200 flex items-center justify-center gap-3 disabled:opacity-70"
               >
-                Enviar Hoja de Reclamación
-                <span>➔</span>
+                {isSubmitting ? 'Enviando…' : 'Enviar Hoja de Reclamación'}
+                {!isSubmitting && <span>➔</span>}
               </button>
             </div>
           </form>

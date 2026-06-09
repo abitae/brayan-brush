@@ -3,8 +3,8 @@
 namespace App\Livewire\Home;
 
 use App\Models\Package\Encomienda;
+use App\Traits\UtilsTrait;
 use Carbon\Carbon;
-use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -13,6 +13,7 @@ use Livewire\Component;
 
 class DashboardLive extends Component
 {
+    use UtilsTrait;
     public string $title = 'DASHBOARD';
 
     public string $sub_title = 'Estadística';
@@ -87,12 +88,30 @@ class DashboardLive extends Component
 
     public function mount(): void
     {
-        $this->date_ini = Carbon::now()->startOfDay()->format('Y-m-d H:i');
-        $this->date_end = Carbon::now()->endOfDay()->format('Y-m-d H:i');
+        $this->date_ini = $this->filterDateStart();
+        $this->date_end = $this->filterDateEnd();
         $this->sucursalNombre = Auth::user()?->sucursal?->code;
         $this->sub_title = $this->sucursalNombre
             ? "Estadísticas — {$this->sucursalNombre}"
             : 'Estadísticas — sin sucursal asignada';
+    }
+
+    public function updatedDateIni(): void
+    {
+        $this->ensureDateRangeOrder($this->date_ini, $this->date_end);
+    }
+
+    public function updatedDateEnd(): void
+    {
+        $this->ensureDateRangeOrder($this->date_ini, $this->date_end);
+    }
+
+    private function dateRange(): array
+    {
+        return [
+            $this->parseFilterDateStart($this->date_ini),
+            $this->parseFilterDateEnd($this->date_end),
+        ];
     }
 
     private function sucursalId(): ?int
@@ -158,15 +177,14 @@ class DashboardLive extends Component
 
     public function render()
     {
-        $dateObj = new DateTime($this->date_ini);
-        $dateEnd = new DateTime($this->date_end);
+        [$dateStart, $dateEnd] = $this->dateRange();
 
-        $this->loadSummaryStats($dateObj, $dateEnd);
+        $this->loadSummaryStats($dateStart, $dateEnd);
 
-        $chartData = $this->getDataForPeriod($dateObj, 'chart');
-        $pieData = $this->getDataForPeriod($dateObj, 'pie');
-        $barData = $this->getDataForPeriod($dateObj, 'bar');
-        $dataTipoCobro = $this->dataTipoCobro($dateObj);
+        $chartData = $this->getDataForPeriod($dateStart, $dateEnd, 'chart');
+        $pieData = $this->getDataForPeriod($dateStart, $dateEnd, 'pie');
+        $barData = $this->getDataForPeriod($dateStart, $dateEnd, 'bar');
+        $dataTipoCobro = $this->dataTipoCobro($dateStart, $dateEnd);
 
         Arr::set($this->myLine, 'data', $chartData);
         Arr::set($this->myLine, 'options', $this->baseOptions(array_replace_recursive(
@@ -234,7 +252,7 @@ class DashboardLive extends Component
         return view('livewire.home.dashboard-live');
     }
 
-    private function loadSummaryStats(DateTime $date, DateTime $dateEnd): void
+    private function loadSummaryStats(Carbon $dateStart, Carbon $dateEnd): void
     {
         if (! $this->sucursalId()) {
             $this->statTotal = 0;
@@ -246,7 +264,7 @@ class DashboardLive extends Component
         }
 
         $stats = $this->encomiendaQuery()
-            ->whereBetween('created_at', [$date, $dateEnd])
+            ->whereBetween('created_at', [$dateStart, $dateEnd])
             ->selectRaw('
                 COUNT(*) as total,
                 COALESCE(SUM(monto), 0) as monto,
@@ -261,35 +279,33 @@ class DashboardLive extends Component
         $this->statEnProceso = (int) ($stats->en_proceso ?? 0);
     }
 
-    private function getDataForPeriod(DateTime $date, string $chartType): array
+    private function getDataForPeriod(Carbon $dateStart, Carbon $dateEnd, string $chartType): array
     {
-        $dateEnd = new DateTime($this->date_end);
-
         $methodName = match ($this->selectedTipe) {
             'Y' => "data{$chartType}Year",
             'd' => "data{$chartType}Day",
             default => "data{$chartType}Month",
         };
 
-        return $this->$methodName($date, $dateEnd);
+        return $this->$methodName($dateStart, $dateEnd);
     }
 
-    private function dataChartYear(DateTime $date, DateTime $dateEnd): array
+    private function dataChartYear(Carbon $dateStart, Carbon $dateEnd): array
     {
-        return $this->getChartData($date, $dateEnd, 'year');
+        return $this->getChartData($dateStart, $dateEnd, 'year');
     }
 
-    private function dataChartMonth(DateTime $date, DateTime $dateEnd): array
+    private function dataChartMonth(Carbon $dateStart, Carbon $dateEnd): array
     {
-        return $this->getChartData($date, $dateEnd, 'month');
+        return $this->getChartData($dateStart, $dateEnd, 'month');
     }
 
-    private function dataChartDay(DateTime $date, DateTime $dateEnd): array
+    private function dataChartDay(Carbon $dateStart, Carbon $dateEnd): array
     {
-        return $this->getChartData($date, $dateEnd, 'day');
+        return $this->getChartData($dateStart, $dateEnd, 'day');
     }
 
-    private function getChartData(DateTime $date, DateTime $dateEnd, string $timeUnit = 'month'): array
+    private function getChartData(Carbon $dateStart, Carbon $dateEnd, string $timeUnit = 'month'): array
     {
         $timeConfigs = [
             'year' => [
@@ -299,19 +315,19 @@ class DashboardLive extends Component
                 'labels' => ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
             ],
             'month' => [
-                'size' => (int) $date->format('t'),
+                'size' => (int) $dateStart->format('t'),
                 'start' => 1,
                 'format' => 'DAY',
-                'where' => ['whereMonth' => $date->format('m'), 'whereYear' => $date->format('Y')],
+                'where' => ['whereMonth' => $dateStart->format('m'), 'whereYear' => $dateStart->format('Y')],
             ],
             'day' => [
                 'size' => 24,
                 'start' => 0,
                 'format' => 'HOUR',
                 'where' => [
-                    'whereMonth' => $date->format('m'),
-                    'whereDay' => $date->format('d'),
-                    'whereYear' => $date->format('Y'),
+                    'whereMonth' => $dateStart->format('m'),
+                    'whereDay' => $dateStart->format('d'),
+                    'whereYear' => $dateStart->format('Y'),
                 ],
             ],
         ];
@@ -322,7 +338,7 @@ class DashboardLive extends Component
             return $this->emptyChart($this->periodLabels($timeUnit, $config));
         }
 
-        $query = $this->encomiendaQuery()->whereBetween('created_at', [$date, $dateEnd]);
+        $query = $this->encomiendaQuery()->whereBetween('created_at', [$dateStart, $dateEnd]);
 
         if (isset($config['where'])) {
             foreach ($config['where'] as $method => $value) {
@@ -373,22 +389,22 @@ class DashboardLive extends Component
         return array_map(fn (int $day) => (string) $day, range(1, $config['size']));
     }
 
-    private function dataPieYear(DateTime $date, DateTime $dateEnd): array
+    private function dataPieYear(Carbon $dateStart, Carbon $dateEnd): array
     {
-        return $this->getPaymentTypeData($date, $dateEnd);
+        return $this->getPaymentTypeData($dateStart, $dateEnd);
     }
 
-    private function dataPieMonth(DateTime $date, DateTime $dateEnd): array
+    private function dataPieMonth(Carbon $dateStart, Carbon $dateEnd): array
     {
-        return $this->getPaymentTypeData($date, $dateEnd);
+        return $this->getPaymentTypeData($dateStart, $dateEnd);
     }
 
-    private function dataPieDay(DateTime $date, DateTime $dateEnd): array
+    private function dataPieDay(Carbon $dateStart, Carbon $dateEnd): array
     {
-        return $this->getPaymentTypeData($date, $dateEnd);
+        return $this->getPaymentTypeData($dateStart, $dateEnd);
     }
 
-    private function getPaymentTypeData(DateTime $date, DateTime $dateEnd): array
+    private function getPaymentTypeData(Carbon $dateStart, Carbon $dateEnd): array
     {
         $paymentTypes = ['Contado', 'Credito'];
         $labels = ['Contado', 'Crédito'];
@@ -398,7 +414,7 @@ class DashboardLive extends Component
         }
 
         $data = $this->encomiendaQuery()
-            ->whereBetween('created_at', [$date, $dateEnd])
+            ->whereBetween('created_at', [$dateStart, $dateEnd])
             ->whereIn('tipo_pago', $paymentTypes)
             ->selectRaw('tipo_pago, SUM(monto) as total_amount')
             ->groupBy('tipo_pago')
@@ -423,22 +439,22 @@ class DashboardLive extends Component
         ];
     }
 
-    private function dataBarYear(DateTime $date, DateTime $dateEnd): array
+    private function dataBarYear(Carbon $dateStart, Carbon $dateEnd): array
     {
-        return $this->getBarData($date, $dateEnd);
+        return $this->getBarData($dateStart, $dateEnd);
     }
 
-    private function dataBarMonth(DateTime $date, DateTime $dateEnd): array
+    private function dataBarMonth(Carbon $dateStart, Carbon $dateEnd): array
     {
-        return $this->getBarData($date, $dateEnd);
+        return $this->getBarData($dateStart, $dateEnd);
     }
 
-    private function dataBarDay(DateTime $date, DateTime $dateEnd): array
+    private function dataBarDay(Carbon $dateStart, Carbon $dateEnd): array
     {
-        return $this->getBarData($date, $dateEnd);
+        return $this->getBarData($dateStart, $dateEnd);
     }
 
-    private function getBarData(DateTime $date, DateTime $dateEnd): array
+    private function getBarData(Carbon $dateStart, Carbon $dateEnd): array
     {
         $estados = array_keys($this->estadoColors);
         $labels = array_values($this->estadoLabels);
@@ -448,7 +464,7 @@ class DashboardLive extends Component
         }
 
         $data = $this->encomiendaQuery()
-            ->whereBetween('created_at', [$date, $dateEnd])
+            ->whereBetween('created_at', [$dateStart, $dateEnd])
             ->selectRaw('estado_encomienda, COUNT(*) as total')
             ->groupBy('estado_encomienda')
             ->get()
@@ -471,9 +487,8 @@ class DashboardLive extends Component
         ];
     }
 
-    private function dataTipoCobro(DateTime $date): array
+    private function dataTipoCobro(Carbon $dateStart, Carbon $dateEnd): array
     {
-        $dateEnd = new DateTime($this->date_end);
         $metodoPagos = array_keys($this->metodoPagoColors);
 
         if (! $this->sucursalId()) {
@@ -481,7 +496,7 @@ class DashboardLive extends Component
         }
 
         $data = $this->encomiendaQuery()
-            ->whereBetween('created_at', [$date, $dateEnd])
+            ->whereBetween('created_at', [$dateStart, $dateEnd])
             ->whereIn('metodo_pago', $metodoPagos)
             ->select('metodo_pago', DB::raw('SUM(monto) as total'))
             ->groupBy('metodo_pago')

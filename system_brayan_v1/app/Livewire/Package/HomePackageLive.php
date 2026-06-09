@@ -72,8 +72,18 @@ class HomePackageLive extends Component
         $this->sucursal_id = Sucursal::where('isActive', true)
             ->whereNotIn('id', [Auth::user()->sucursal->id])
             ->first()->id;
-        $this->filtroFechaInicio = Carbon::now()->startOfDay()->format('Y-m-d H:i');//$this->dateNow('Y-m-d');
-        $this->filtroFechaFin = $this->dateNow('Y-m-d H:i:s');
+        $this->filtroFechaInicio = $this->filterDateStart();
+        $this->filtroFechaFin = $this->filterDateEnd();
+    }
+
+    public function updatedFiltroFechaInicio(): void
+    {
+        $this->ensureDateRangeOrder($this->filtroFechaInicio, $this->filtroFechaFin);
+    }
+
+    public function updatedFiltroFechaFin(): void
+    {
+        $this->ensureDateRangeOrder($this->filtroFechaInicio, $this->filtroFechaFin);
     }
 
     public function render()
@@ -89,9 +99,9 @@ class HomePackageLive extends Component
             ->where('isReturn', false);
         // Apply date range filter if both dates are set
         if ($this->filtroFechaInicio && $this->filtroFechaFin) {
-            $encomiendas->whereBetween('created_at', [
-                Carbon::parse($this->filtroFechaInicio)->startOfDay(),
-                Carbon::parse($this->filtroFechaFin)->endOfDay()
+            $encomiendas->whereBetween('fecha_recepcion', [
+                $this->parseFilterDateStart($this->filtroFechaInicio),
+                $this->parseFilterDateEnd($this->filtroFechaFin),
             ]);
         }
         // Apply search filter across multiple related fields

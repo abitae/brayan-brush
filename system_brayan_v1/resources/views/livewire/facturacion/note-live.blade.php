@@ -3,6 +3,20 @@
         <x-slot:menu>
 
         </x-slot:menu>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 p-2 shadow-xl">
+            <div>
+                <x-mary-input type='search' label="Buscar nota" icon="o-funnel" wire:model.live="search"
+                    placeholder="Buscar nota" />
+            </div>
+            <div>
+                <x-mary-datetime label="Desde" wire:model.live="filtroFechaInicio" icon="o-calendar"
+                    type="datetime-local" />
+            </div>
+            <div>
+                <x-mary-datetime label="Hasta" wire:model.live="filtroFechaFin" icon="o-calendar"
+                    type="datetime-local" />
+            </div>
+        </div>
         @php
         $headers = [
         ['key' => 'id', 'label' => '#', 'class' => 'bg-green-500 w-1 text-white'],

@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Service;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class ServiceController extends Controller
 {
@@ -17,6 +16,7 @@ class ServiceController extends Controller
             'title' => $s->title,
             'description' => $s->description,
             'icon_type' => $s->icon_type,
+            'icon_url' => $s->icon_url,
             'image_url' => $s->image_url,
         ];
     }
@@ -33,13 +33,15 @@ class ServiceController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:500',
-            'icon_type' => 'required|string|in:Box,Home,Package',
         ]);
 
         $maxOrder = Service::max('sort_order') ?? -1;
-        $validated['sort_order'] = $maxOrder + 1;
 
-        $service = Service::create($validated);
+        $service = Service::create([
+            ...$validated,
+            'icon_type' => 'Box',
+            'sort_order' => $maxOrder + 1,
+        ]);
 
         return response()->json($this->serviceToArray($service), 201);
     }
@@ -49,7 +51,6 @@ class ServiceController extends Controller
         $validated = $request->validate([
             'title' => 'sometimes|string|max:255',
             'description' => 'sometimes|string|max:500',
-            'icon_type' => 'sometimes|string|in:Box,Home,Package',
         ]);
 
         $service->update($validated);
@@ -66,18 +67,33 @@ class ServiceController extends Controller
 
     public function uploadImage(Request $request, Service $service): JsonResponse
     {
-        $request->validate([
-            'file' => 'required|file|mimes:png,jpg,jpeg,webp|max:10240',
-        ]);
-
-        $file = $request->file('file');
-        $ext = $file->getClientOriginalExtension();
-        $name = 'service_'.$service->id.'_'.time().'.'.strtolower($ext);
-        $path = $file->storeAs('uploads', $name, 'public');
-        $url = Storage::disk('public')->url($path);
+        $url = $this->storeUpload($request, 'service_'.$service->id.'_img');
 
         $service->update(['image_url' => $url]);
 
         return response()->json(['url' => $url, 'service' => $this->serviceToArray($service->fresh())]);
+    }
+
+    public function uploadIcon(Request $request, Service $service): JsonResponse
+    {
+        $url = $this->storeUpload($request, 'service_'.$service->id.'_icon', 2048);
+
+        $service->update(['icon_url' => $url]);
+
+        return response()->json(['url' => $url, 'service' => $this->serviceToArray($service->fresh())]);
+    }
+
+    private function storeUpload(Request $request, string $prefix, int $maxKb = 10240): string
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:png,jpg,jpeg,webp,svg|max:'.$maxKb,
+        ]);
+
+        $file = $request->file('file');
+        $ext = $file->getClientOriginalExtension();
+        $name = $prefix.'_'.time().'.'.strtolower($ext);
+        $path = $file->storeAs('uploads', $name, 'public');
+
+        return asset('storage/'.$path);
     }
 }

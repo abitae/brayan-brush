@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { usePageContent } from '@/hooks/use-page-content';
 
 interface ProhibitedCategory {
   title: string;
@@ -10,14 +11,16 @@ interface ProhibitedSectionProps {
 }
 
 export default function ProhibitedSection({ items = [] }: ProhibitedSectionProps) {
+  const prohibited = usePageContent().prohibited;
+
   return (
     <section className="py-24 bg-slate-50 min-h-[70vh]">
       <div className="max-w-6xl mx-auto px-4">
         <div className="text-center mb-16">
           <span className="text-rose-600 font-bold uppercase tracking-widest text-sm mb-4 block">
-            Seguridad en el transporte
+            {prohibited.eyebrow}
           </span>
-          <h2 className="text-5xl font-black text-slate-900 mb-4 tracking-tight">Artículos Prohibidos</h2>
+          <h2 className="text-5xl font-black text-slate-900 mb-4 tracking-tight">{prohibited.title}</h2>
           <div className="w-24 h-1.5 bg-rose-500 mx-auto rounded-full" />
         </div>
 
@@ -46,24 +49,18 @@ export default function ProhibitedSection({ items = [] }: ProhibitedSectionProps
           <div className="absolute top-0 right-0 w-32 h-32 bg-rose-200/20 rounded-full -mr-16 -mt-16" />
           <div className="relative z-10">
             <h3 className="text-3xl font-black text-rose-900 mb-6 flex items-center gap-3">
-              <span className="text-4xl">⚠️</span> Aviso Importante
+              <span className="text-4xl">⚠️</span> {prohibited.warning_title}
             </h3>
             <div className="space-y-4 text-rose-800 text-lg font-medium leading-relaxed max-w-4xl">
-              <p>
-                El envío de artículos prohibidos está sujeto a sanciones legales y puede resultar en la cancelación del
-                servicio sin derecho a reembolso.
-              </p>
-              <p className="text-rose-700/80">
-                Si tiene dudas sobre algún artículo específico, por favor contáctenos antes de realizar el envío para
-                recibir asesoría personalizada.
-              </p>
+              <p>{prohibited.warning_text_1}</p>
+              <p className="text-rose-700/80">{prohibited.warning_text_2}</p>
             </div>
             <div className="mt-8 flex justify-end">
               <Link
                 href="/contacto"
                 className="bg-rose-600 text-white px-8 py-3 rounded-2xl font-bold hover:bg-rose-700 transition-colors shadow-lg"
               >
-                Consultar con Soporte
+                {prohibited.warning_button}
               </Link>
             </div>
           </div>

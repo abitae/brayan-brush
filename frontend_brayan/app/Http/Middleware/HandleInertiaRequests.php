@@ -48,9 +48,17 @@ class HandleInertiaRequests extends Middleware
                 'logo_url' => $config->logo_url,
                 'banner_url' => $config->banner_url,
                 'banner_bg_url' => $config->banner_bg_url,
+                'page_content' => $config->resolvedPageContent(),
             ];
         } catch (\Throwable) {
             // Tables may not exist yet during migrations
+        }
+
+        $agencies = [];
+        try {
+            $agencies = \App\Models\Agency::listForFront()->values()->all();
+        } catch (\Throwable) {
+            // Table may not exist yet during migrations
         }
 
         return [
@@ -61,6 +69,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'siteConfig' => $siteConfig,
+            'agencies' => $agencies,
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

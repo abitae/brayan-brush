@@ -3,6 +3,7 @@ namespace App\Livewire\Facturacion;
 
 use App\Models\Facturacion\Note;
 use App\Services\SunatServiceGlobal;
+use App\Traits\UtilsTrait;
 use Greenter\Report\XmlUtils;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
@@ -14,20 +15,61 @@ class NoteLive extends Component
 {
     use Toast;
     use WithPagination, WithoutUrlPagination;
+    use UtilsTrait;
     public string $title = 'NOTAS DE CREDITO';
     public string $sub_title = 'Modulo de notas de credito';
     public int $perPage = 10;
     public $infoModal = false;
+    public $filtroFechaInicio;
+    public $filtroFechaFin;
+    public $search;
 
     public $cdr_code;
     public $cdr_description;
     public $cdr_note;
     public $errorCode;
     public $errorMessage;
+
+    public function mount(): void
+    {
+        $this->filtroFechaInicio = $this->filterDateStart();
+        $this->filtroFechaFin = $this->filterDateEnd();
+    }
+
+    public function updatedFiltroFechaInicio(): void
+    {
+        $this->ensureDateRangeOrder($this->filtroFechaInicio, $this->filtroFechaFin);
+    }
+
+    public function updatedFiltroFechaFin(): void
+    {
+        $this->ensureDateRangeOrder($this->filtroFechaInicio, $this->filtroFechaFin);
+    }
+
     public function render()
     {
-        $notes = Note::latest()->paginate($this->perPage);
-        return view('livewire.facturacion.note-live',compact('notes'));
+        $notes = Note::query()
+            ->when($this->search, function ($query) {
+                return $query->where(function ($q) {
+                    $q->where('serie', 'like', '%' . $this->search . '%')
+                        ->orWhere('correlativo', 'like', '%' . $this->search . '%')
+                        ->orWhere('numDocfectado', 'like', '%' . $this->search . '%')
+                        ->orWhereHas('client', function ($query) {
+                            $query->where('code', 'like', '%' . $this->search . '%')
+                                ->orWhere('name', 'like', '%' . $this->search . '%');
+                        });
+                });
+            })
+            ->when($this->filtroFechaInicio && $this->filtroFechaFin, function ($query) {
+                return $query->whereBetween('fechaEmision', [
+                    $this->parseFilterDateStart($this->filtroFechaInicio),
+                    $this->parseFilterDateEnd($this->filtroFechaFin),
+                ]);
+            })
+            ->latest()
+            ->paginate($this->perPage);
+
+        return view('livewire.facturacion.note-live', compact('notes'));
     }
     public function xmlGenerate(Note $note)
     {

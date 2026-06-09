@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Facturacion;
 
+use App\Exports\InvoiceExport;
 use App\Models\Facturacion\Invoice;
 use App\Services\SunatServiceGlobal;
 use App\Traits\UtilsTrait;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 use Mary\Traits\Toast;
 
 class InvoiceLive extends Component
@@ -41,12 +43,55 @@ class InvoiceLive extends Component
     ];
     public function mount()
     {
-        $this->filtroFechaInicio = Carbon::now()->startOfDay()->format('Y-m-d H:i'); //$this->dateNow('Y-m-d');
-        $this->filtroFechaFin = $this->dateNow('Y-m-d H:i:s');
+        $this->filtroFechaInicio = $this->filterDateStart();
+        $this->filtroFechaFin = $this->filterDateEnd();
     }
+
+    public function updatedFiltroFechaInicio(): void
+    {
+        $this->ensureDateRangeOrder($this->filtroFechaInicio, $this->filtroFechaFin);
+    }
+
+    public function updatedFiltroFechaFin(): void
+    {
+        $this->ensureDateRangeOrder($this->filtroFechaInicio, $this->filtroFechaFin);
+    }
+
     public function render()
     {
-        $invoices = Invoice::query()
+        $invoices = $this->invoicesQuery()->paginate($this->perPage);
+
+        return view('livewire.facturacion.invoice-live', compact('invoices'));
+    }
+
+    public function excelGenerate()
+    {
+        $invoices = $this->invoicesQuery()
+            ->with(['client', 'encomienda'])
+            ->get();
+
+        if ($invoices->isEmpty()) {
+            $this->toast('warning', 'No hay comprobantes para exportar en el rango seleccionado');
+
+            return null;
+        }
+
+        $totalBase = round($invoices->sum(fn (Invoice $invoice) => (float) $invoice->mtoOperGravadas), 2);
+        $totalIgv = round($invoices->sum(fn (Invoice $invoice) => (float) $invoice->mtoIGV), 2);
+        $totalVentas = round($invoices->sum(fn (Invoice $invoice) => (float) $invoice->mtoImpVenta), 2);
+        $filename = 'reporte_invoices_' . Carbon::now()->format('Ymd_His') . '.xlsx';
+
+        $this->toast('success', 'Generando reporte Excel');
+
+        return Excel::download(
+            new InvoiceExport($invoices, $totalBase, $totalIgv, $totalVentas),
+            $filename
+        );
+    }
+
+    private function invoicesQuery()
+    {
+        return Invoice::query()
             ->when($this->search, function ($query) {
                 return $query->where(function ($q) {
                     $q->where('serie', 'like', '%' . $this->search . '%')
@@ -58,19 +103,15 @@ class InvoiceLive extends Component
                 });
             })
             ->when($this->filtroFechaInicio && $this->filtroFechaFin, function ($query) {
-                return $query->whereBetween('created_at', [
-                    Carbon::parse($this->filtroFechaInicio)->startOfDay(),
-                    Carbon::parse($this->filtroFechaFin)->endOfDay()
+                return $query->whereBetween('fechaEmision', [
+                    $this->parseFilterDateStart($this->filtroFechaInicio),
+                    $this->parseFilterDateEnd($this->filtroFechaFin),
                 ]);
             })
             ->when($this->FiltroFormaPagoTipo !== 'Todos', function ($query) {
                 return $query->where('formaPago_tipo', $this->FiltroFormaPagoTipo);
             })
-            ->latest()
-            ->paginate($this->perPage);
-
-
-        return view('livewire.facturacion.invoice-live', compact('invoices'));
+            ->latest();
     }
     public function xmlGenerate(Invoice $invoice)
     {
@@ -157,9 +198,9 @@ class InvoiceLive extends Component
     {
         $invoices = Invoice::whereNull('xml_path')
             ->when($this->filtroFechaInicio && $this->filtroFechaFin, function ($query) {
-                return $query->whereBetween('created_at', [
-                    Carbon::parse($this->filtroFechaInicio)->startOfDay(),
-                    Carbon::parse($this->filtroFechaFin)->endOfDay()
+                return $query->whereBetween('fechaEmision', [
+                    $this->parseFilterDateStart($this->filtroFechaInicio),
+                    $this->parseFilterDateEnd($this->filtroFechaFin),
                 ]);
             })->get();
         if ($invoices->count() != 0) {
@@ -170,9 +211,9 @@ class InvoiceLive extends Component
         $invoices = Invoice::whereNull('cdr_path')
             ->whereNotNull('xml_path')
             ->when($this->filtroFechaInicio && $this->filtroFechaFin, function ($query) {
-                return $query->whereBetween('created_at', [
-                    Carbon::parse($this->filtroFechaInicio)->startOfDay(),
-                    Carbon::parse($this->filtroFechaFin)->endOfDay()
+                return $query->whereBetween('fechaEmision', [
+                    $this->parseFilterDateStart($this->filtroFechaInicio),
+                    $this->parseFilterDateEnd($this->filtroFechaFin),
                 ]);
             })->get();
         $this->num_invoices = $invoices->count();

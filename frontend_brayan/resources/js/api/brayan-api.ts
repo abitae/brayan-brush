@@ -1,3 +1,5 @@
+import type { PageContent } from '@/types/page-content';
+
 /**
  * Cliente API para Brayan Brush (mismo Laravel, rutas /api/*).
  * Usa sesión y CSRF (cookie XSRF-TOKEN).
@@ -65,8 +67,10 @@ export interface SiteConfig {
   hero_subtitle: string;
   primary_color: string;
   logo_url?: string | null;
+  favicon_url?: string | null;
   banner_url?: string | null;
   banner_bg_url?: string | null;
+  page_content?: PageContent;
   tracking_api_url?: string | null;
   gemini_model?: string | null;
   gemini_system_instruction?: string | null;
@@ -152,12 +156,45 @@ export async function uploadLogo(file: File): Promise<{ url: string }> {
   return uploadFile('/api/config/upload-logo', file);
 }
 
+export async function uploadFavicon(file: File): Promise<{ url: string }> {
+  return uploadFile('/api/config/upload-favicon', file);
+}
+
 export async function uploadBanner(file: File): Promise<{ url: string }> {
   return uploadFile('/api/config/upload-banner', file);
 }
 
 export async function uploadBannerBg(file: File): Promise<{ url: string }> {
   return uploadFile('/api/config/upload-banner-bg', file);
+}
+
+export async function uploadAboutImage(file: File): Promise<{ url: string }> {
+  return uploadFile('/api/config/upload-about-image', file);
+}
+
+// --- Agencias (admin) ---
+export interface AgencyItem {
+  id: number;
+  name: string;
+  address: string;
+  city: string;
+  phone: string;
+  lat: number;
+  lng: number;
+  sort_order: number;
+  is_active: boolean;
+}
+
+export async function createAgency(data: Omit<AgencyItem, 'id' | 'sort_order'> & { sort_order?: number }): Promise<AgencyItem> {
+  return fetchApi<AgencyItem>('/api/agencies', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function updateAgency(id: number, data: Partial<AgencyItem>): Promise<AgencyItem> {
+  return fetchApi<AgencyItem>(`/api/agencies/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export async function deleteAgency(id: number): Promise<{ message: string }> {
+  return fetchApi<{ message: string }>(`/api/agencies/${id}`, { method: 'DELETE' });
 }
 
 export async function assistantChat(message: string): Promise<string> {
@@ -174,6 +211,7 @@ export interface ServiceItem {
   title: string;
   description: string;
   icon_type: string;
+  icon_url?: string | null;
   image_url?: string | null;
 }
 
@@ -184,14 +222,13 @@ export async function getServices(): Promise<ServiceItem[]> {
 export async function createService(data: {
   title: string;
   description: string;
-  icon_type: 'Box' | 'Home' | 'Package';
 }): Promise<ServiceItem> {
   return fetchApi<ServiceItem>('/api/services', { method: 'POST', body: JSON.stringify(data) });
 }
 
 export async function updateService(
   id: string,
-  data: { title?: string; description?: string; icon_type?: 'Box' | 'Home' | 'Package' }
+  data: { title?: string; description?: string }
 ): Promise<ServiceItem> {
   return fetchApi<ServiceItem>(`/api/services/${id}`, { method: 'PUT', body: JSON.stringify(data) });
 }
@@ -200,8 +237,12 @@ export async function deleteService(id: string): Promise<{ message: string }> {
   return fetchApi<{ message: string }>(`/api/services/${id}`, { method: 'DELETE' });
 }
 
-export async function uploadServiceImage(serviceId: string, file: File): Promise<{ url: string; service: ServiceItem }> {
-  const url = `${API_BASE}/api/services/${serviceId}/upload-image`;
+async function uploadServiceFile(
+  serviceId: string,
+  endpoint: 'upload-image' | 'upload-icon',
+  file: File
+): Promise<{ url: string; service: ServiceItem }> {
+  const url = `${API_BASE}/api/services/${serviceId}/${endpoint}`;
   const form = new FormData();
   form.append('file', file);
   const csrf = getCsrfToken();
@@ -213,6 +254,14 @@ export async function uploadServiceImage(serviceId: string, file: File): Promise
     throw new Error((err as { message?: string }).message || res.statusText);
   }
   return res.json();
+}
+
+export async function uploadServiceImage(serviceId: string, file: File): Promise<{ url: string; service: ServiceItem }> {
+  return uploadServiceFile(serviceId, 'upload-image', file);
+}
+
+export async function uploadServiceIcon(serviceId: string, file: File): Promise<{ url: string; service: ServiceItem }> {
+  return uploadServiceFile(serviceId, 'upload-icon', file);
 }
 
 // --- Precios por ruta (cotizaciones) ---
@@ -391,4 +440,55 @@ export async function updateQuote(
 
 export async function deleteQuote(id: number): Promise<{ message: string }> {
   return fetchApi<{ message: string }>(`/api/quotes/${id}`, { method: 'DELETE' });
+}
+
+// --- Reclamaciones ---
+export type ComplaintStatus = 'pendiente' | 'en_proceso' | 'resuelto';
+
+export interface ComplaintItem {
+  id: number;
+  code: string;
+  nombre: string;
+  documento: string;
+  telefono: string;
+  email: string;
+  direccion: string;
+  tipo: 'Queja' | 'Reclamo';
+  detalle: string;
+  status: ComplaintStatus;
+  admin_notes: string | null;
+  created_at: string;
+}
+
+export async function submitComplaint(data: {
+  nombre: string;
+  documento: string;
+  telefono: string;
+  email: string;
+  direccion: string;
+  tipo: 'Queja' | 'Reclamo';
+  detalle: string;
+}): Promise<{ id: number; code: string; message: string }> {
+  return fetchApi<{ id: number; code: string; message: string }>('/api/complaints', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getComplaints(): Promise<ComplaintItem[]> {
+  return fetchApi<ComplaintItem[]>('/api/complaints');
+}
+
+export async function updateComplaint(
+  id: number,
+  data: { status?: ComplaintStatus; admin_notes?: string | null }
+): Promise<ComplaintItem> {
+  return fetchApi<ComplaintItem>(`/api/complaints/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteComplaint(id: number): Promise<{ message: string }> {
+  return fetchApi<{ message: string }>(`/api/complaints/${id}`, { method: 'DELETE' });
 }

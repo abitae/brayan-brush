@@ -1,0 +1,128 @@
+<?php
+
+namespace App\Support;
+
+class PageContent
+{
+    /**
+     * @return array<string, mixed>
+     */
+    public static function defaults(): array
+    {
+        return [
+            'hero' => [
+                'badge' => 'Transporte terrestre nacional',
+                'stat_1_value' => '24+',
+                'stat_1_label' => 'Agencias',
+                'stat_1_sub' => 'En todo el Perú',
+                'stat_2_value' => '100%',
+                'stat_2_label' => 'Rastreo',
+                'stat_2_sub' => 'En tiempo real',
+                'stat_3_value' => '15+',
+                'stat_3_label' => 'Años',
+                'stat_3_sub' => 'De experiencia',
+                'image_caption_title' => 'Cobertura nacional',
+                'image_caption_cities' => 'Lima · Norte · Sur · Centro',
+                'image_caption_text' => 'Flota moderna y segura para mover tu carga con puntualidad en todo el territorio peruano.',
+                'float_card_title' => 'Entregas',
+                'float_card_text' => 'Agencia y domicilio',
+                'float_badge' => 'Seguimiento en línea activo',
+            ],
+            'portfolio' => [
+                'eyebrow' => 'Portafolio Estratégico',
+                'title' => 'Servicios especializados',
+                'subtitle' => 'Soluciones logísticas para paquetería, mudanzas y carga pesada. Elige el servicio que se adapta a tu operación y cotiza en minutos.',
+                'highlight_1_label' => 'Cobertura',
+                'highlight_1_value' => 'Nacional',
+                'highlight_2_label' => 'Modalidad',
+                'highlight_2_value' => 'B2B y B2C',
+                'highlight_3_label' => 'Seguimiento',
+                'highlight_3_value' => 'En línea',
+                'cta_eyebrow' => '¿Necesitas otro tipo de envío?',
+                'cta_title' => 'Explora el catálogo completo',
+                'cta_text' => 'Consulta todos nuestros servicios, compara opciones y solicita una cotización personalizada.',
+            ],
+            'about' => [
+                'title' => 'Liderazgo en la ruta nacional peruana.',
+                'text_1' => 'es más que una empresa de transporte; somos su socio estratégico. Gracias a nuestro panel de control centralizado, gestionamos cada unidad con precisión quirúrgica.',
+                'text_2' => 'Nuestra misión es garantizar que su carga llegue a tiempo, sin importar el destino en el vasto territorio peruano. La tecnología y el compromiso son nuestros pilares.',
+                'badge' => 'Excelencia en Logística',
+                'image_url' => 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&q=80&w=800',
+            ],
+            'agencies' => [
+                'title' => 'Nuestra Red en Perú',
+                'subtitle' => 'Encuentra tu punto Brayan Brush más cercano en Lima, Arequipa, Trujillo o Callao.',
+                'cta_title' => '¿Quieres ser parte de nuestra red en Perú?',
+                'cta_text' => 'Estamos expandiéndonos en todas las provincias del Perú. Si tienes una empresa de transporte local, únete como agencia aliada.',
+                'cta_button' => 'Convertirse en Aliado',
+            ],
+            'contact' => [
+                'title' => 'Solicita tu Cotización en línea',
+                'title_highlight' => 'Cotización',
+                'subtitle' => 'Completa el formulario y uno de nuestros asesores expertos te enviará una propuesta personalizada de inmediato. Tu requerimiento aparecerá directamente en nuestro panel de gestión.',
+            ],
+            'tracking' => [
+                'eyebrow' => 'Seguimiento en línea',
+                'title' => 'Rastrea tu encomienda',
+                'title_highlight' => 'encomienda',
+                'subtitle' => 'Ingresa el código de guía y el DNI o RUC del remitente o destinatario para consultar el estado de tu envío.',
+                'empty_title' => 'Consulta el estado de tu paquete',
+                'empty_text' => 'Estados disponibles: Registrado, Enviado, Recibido, Entregado o Retornado. Completa el formulario para ver el detalle y el historial del envío.',
+            ],
+            'prohibited' => [
+                'eyebrow' => 'Seguridad en el transporte',
+                'title' => 'Artículos Prohibidos',
+                'warning_title' => 'Aviso Importante',
+                'warning_text_1' => 'El envío de artículos prohibidos está sujeto a sanciones legales y puede resultar en la cancelación del servicio sin derecho a reembolso.',
+                'warning_text_2' => 'Si tiene dudas sobre algún artículo específico, por favor contáctenos antes de realizar el envío para recibir asesoría personalizada.',
+                'warning_button' => 'Consultar con Soporte',
+            ],
+            'calculator' => [
+                'eyebrow' => 'Cotizador Inteligente',
+                'title' => 'Calcula el costo de tu envío',
+                'title_highlight' => 'envío',
+                'subtitle' => 'Obtén una tarifa inmediata basada en peso real o dimensiones volumétricas.',
+            ],
+            'services_page' => [
+                'eyebrow' => 'Catálogo de Servicios Logísticos',
+                'title' => 'Soluciones a la velocidad de tu negocio',
+                'title_highlight' => 'velocidad',
+                'subtitle' => 'Explora nuestra red de transporte, almacenamiento y paquetería diseñada para superar las exigencias modernas.',
+                'feature_1_title' => 'Seguridad Total',
+                'feature_1_text' => 'Monitoreo GPS 24/7 y pólizas contra todo riesgo para que tu carga llegue intacta.',
+                'feature_2_title' => 'Velocidad Express',
+                'feature_2_text' => 'Rutas optimizadas diariamente para garantizar entregas en tiempo récord.',
+                'feature_3_title' => 'Atención Personalizada',
+                'feature_3_text' => 'Un asesor logístico dedicado para gestionar todos tus envíos, sin complicaciones.',
+                'cta_title' => '¿Listo para mover tu carga?',
+                'cta_text' => 'Cotiza ahora mismo y descubre por qué las mejores empresas confían en Brayan Brush para su logística.',
+                'cta_button_primary' => 'Empezar a Cotizar Ahora',
+                'cta_button_secondary' => 'Hablar con Ventas',
+            ],
+            'footer' => [
+                'description' => 'Liderazgo y tecnología en transporte terrestre nacional peruano. Conectando regiones con seguridad.',
+                'copyright_suffix' => 'Corporación Logística Perú. All rights reserved.',
+            ],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $stored
+     * @return array<string, mixed>
+     */
+    public static function merge(?array $stored): array
+    {
+        return array_replace_recursive(self::defaults(), $stored ?? []);
+    }
+
+    /**
+     * @param  array<string, mixed>  $content
+     * @return array<string, mixed>
+     */
+    public static function sanitizeForSave(array $content): array
+    {
+        $merged = self::merge($content);
+
+        return self::merge($merged);
+    }
+}

@@ -5,6 +5,7 @@ export interface SiteConfig {
   hero_subtitle: string;
   primary_color: string;
   logo_url?: string | null;
+  favicon_url?: string | null;
   banner_url?: string | null;
   banner_bg_url?: string | null;
 }

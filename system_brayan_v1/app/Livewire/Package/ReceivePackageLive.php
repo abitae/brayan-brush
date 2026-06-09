@@ -38,8 +38,18 @@ class ReceivePackageLive extends Component
         $this->sucursal_id = Sucursal::where('isActive', true)
             ->whereNotIn('id', [Auth::user()->sucursal->id])
             ->first()->id;
-        $this->date_ini = Carbon::now()->startOfDay()->format('Y-m-d H:i');//$this->dateNow('Y-m-d');
-        $this->date_fin = $this->dateNow('Y-m-d H:i:s');
+        $this->date_ini = $this->filterDateStart();
+        $this->date_fin = $this->filterDateEnd();
+    }
+
+    public function updatedDateIni(): void
+    {
+        $this->ensureDateRangeOrder($this->date_ini, $this->date_fin);
+    }
+
+    public function updatedDateFin(): void
+    {
+        $this->ensureDateRangeOrder($this->date_ini, $this->date_fin);
     }
 
     public function render()
@@ -49,9 +59,9 @@ class ReceivePackageLive extends Component
             ->get();
             $encomiendas = Encomienda::query()
             ->when($this->date_ini && $this->date_fin, function($query) {
-                $query->whereBetween('created_at', [
-                    Carbon::parse($this->date_ini)->startOfDay(),
-                    Carbon::parse($this->date_fin)->endOfDay()
+                $query->whereBetween('fecha_envio', [
+                    $this->parseFilterDateStart($this->date_ini),
+                    $this->parseFilterDateEnd($this->date_fin),
                 ]);
             })
             ->where([

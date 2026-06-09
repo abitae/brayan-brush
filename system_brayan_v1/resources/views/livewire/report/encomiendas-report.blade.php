@@ -5,7 +5,7 @@
                 spinner class="text-white bg-orange-500 hover:bg-orange-600 transition-colors duration-200" />
         </x-slot:menu>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 p-2 shadow-xl">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2 p-2 shadow-xl">
             <div>
                 <x-mary-input type='search' label="Buscar" icon="o-funnel" wire:model.live="search"
                     placeholder="Buscar" />
@@ -30,6 +30,10 @@
             <div>
                 <x-mary-select label="Estado pago" icon="s-inbox-stack" :options="$estadosPago"
                     wire:model.live="FiltroEstadoPago" />
+            </div>
+            <div>
+                <x-mary-select label="Tipo comprobante" icon="o-document" :options="$tiposComprobante"
+                    wire:model.live="filtroTipoComprobante" placeholder="Todos" />
             </div>
 
         </div>

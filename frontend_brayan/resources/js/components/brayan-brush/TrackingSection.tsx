@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { getTracking } from '@/api/brayan-api';
 import type { TrackingResult } from '@/api/brayan-api';
 import { ICONS } from '@/constants/brayan';
+import { usePageContent } from '@/hooks/use-page-content';
 
 const DOCUMENT_REGEX = /^\d{8,11}$/;
 
@@ -66,7 +67,24 @@ function statusStepIndex(status: string): number {
   return map[status] ?? 0;
 }
 
+function renderHighlightedTitle(title: string, highlight: string) {
+  if (!title.includes(highlight)) {
+    return (
+      <>
+        {title} <span className="text-emerald-600 font-black">{highlight}</span>
+      </>
+    );
+  }
+  return title.split(highlight).map((part, i, arr) => (
+    <span key={i}>
+      {part}
+      {i < arr.length - 1 && <span className="text-emerald-600 font-black">{highlight}</span>}
+    </span>
+  ));
+}
+
 export default function TrackingSection() {
+  const tracking = usePageContent().tracking;
   const [trackingCode, setTrackingCode] = useState('');
   const [document, setDocument] = useState('');
   const [result, setResult] = useState<TrackingResult | null>(null);
@@ -115,14 +133,12 @@ export default function TrackingSection() {
       <div className="max-w-6xl mx-auto px-4">
         <div className="text-center mb-12 md:mb-16">
           <p className="text-emerald-600 font-black text-[10px] uppercase tracking-[0.35em] mb-4">
-            Seguimiento en línea
+            {tracking.eyebrow}
           </p>
           <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">
-            Rastrea tu <span className="text-emerald-600 font-black">encomienda</span>
+            {renderHighlightedTitle(tracking.title, tracking.title_highlight)}
           </h2>
-          <p className="text-slate-500 text-lg max-w-2xl mx-auto">
-            Ingresa el código de guía y el DNI o RUC del remitente o destinatario para consultar el estado de tu envío.
-          </p>
+          <p className="text-slate-500 text-lg max-w-2xl mx-auto">{tracking.subtitle}</p>
         </div>
 
         <div className="bg-slate-50 rounded-[40px] p-8 md:p-14 border border-slate-100 shadow-2xl shadow-slate-200/50 mb-12">
@@ -217,11 +233,8 @@ export default function TrackingSection() {
             <div className="w-20 h-20 bg-white rounded-3xl border border-slate-100 shadow-sm flex items-center justify-center mx-auto mb-6 text-emerald-600">
               <BoxIcon />
             </div>
-            <h3 className="text-xl font-black text-slate-800 mb-2">Consulta el estado de tu paquete</h3>
-            <p className="text-slate-500 max-w-md mx-auto text-sm leading-relaxed">
-              Estados disponibles: Registrado, Enviado, Recibido, Entregado o Retornado. Completa el formulario para ver
-              el detalle y el historial del envío.
-            </p>
+            <h3 className="text-xl font-black text-slate-800 mb-2">{tracking.empty_title}</h3>
+            <p className="text-slate-500 max-w-md mx-auto text-sm leading-relaxed">{tracking.empty_text}</p>
           </div>
         )}
 

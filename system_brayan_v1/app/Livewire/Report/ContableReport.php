@@ -71,8 +71,8 @@ class ContableReport extends Component
 
     public function mount(): void
     {
-        $this->filtroFechaInicio = Carbon::now()->startOfMonth()->format('Y-m-d H:i');
-        $this->filtroFechaFin = $this->dateNow('Y-m-d H:i:s');
+        $this->filtroFechaInicio = $this->filterDateStartOfMonth();
+        $this->filtroFechaFin = $this->filterDateEnd();
 
         $user = Auth::user();
 
@@ -127,6 +127,16 @@ class ContableReport extends Component
     public function updatedPerPage(): void
     {
         $this->resetPage();
+    }
+
+    public function updatedFiltroFechaInicio(): void
+    {
+        $this->ensureDateRangeOrder($this->filtroFechaInicio, $this->filtroFechaFin);
+    }
+
+    public function updatedFiltroFechaFin(): void
+    {
+        $this->ensureDateRangeOrder($this->filtroFechaInicio, $this->filtroFechaFin);
     }
 
     public function updated(string $property): void
@@ -237,8 +247,8 @@ class ContableReport extends Component
 
         if ($this->filtroFechaInicio && $this->filtroFechaFin) {
             $query->whereBetween($dateColumn, [
-                Carbon::parse($this->filtroFechaInicio)->startOfDay(),
-                Carbon::parse($this->filtroFechaFin)->endOfDay(),
+                $this->parseFilterDateStart($this->filtroFechaInicio),
+                $this->parseFilterDateEnd($this->filtroFechaFin),
             ]);
         }
 

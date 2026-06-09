@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { usePageContent } from '@/hooks/use-page-content';
 
 interface ContactSectionProps {
   onQuoteSubmit?: (q: Record<string, string>) => void;
 }
 
 export default function ContactSection({ onQuoteSubmit }: ContactSectionProps) {
+  const contact = usePageContent().contact;
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
@@ -30,12 +32,20 @@ export default function ContactSection({ onQuoteSubmit }: ContactSectionProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div>
             <h2 className="text-5xl font-black text-slate-900 mb-8 leading-tight">
-              Solicita tu <span className="text-emerald-600">Cotización</span> en línea
+              {contact.title.includes(contact.title_highlight) ? (
+                contact.title.split(contact.title_highlight).map((part, i, arr) => (
+                  <span key={i}>
+                    {part}
+                    {i < arr.length - 1 && <span className="text-emerald-600">{contact.title_highlight}</span>}
+                  </span>
+                ))
+              ) : (
+                <>
+                  {contact.title} <span className="text-emerald-600">{contact.title_highlight}</span>
+                </>
+              )}
             </h2>
-            <p className="text-slate-600 text-lg mb-10 leading-relaxed font-medium">
-              Completa el formulario y uno de nuestros asesores expertos te enviará una propuesta personalizada de
-              inmediato. Tu requerimiento aparecerá directamente en nuestro panel de gestión.
-            </p>
+            <p className="text-slate-600 text-lg mb-10 leading-relaxed font-medium">{contact.subtitle}</p>
           </div>
 
           <div className="bg-white rounded-[40px] p-8 md:p-12 border border-slate-100 shadow-2xl relative">

@@ -1,6 +1,8 @@
 <div>
     <x-mary-card title="{{ $title }}" subtitle="{{ $sub_title }}" separator>
         <x-slot:menu>
+            <x-mary-button icon="o-document-arrow-down" label="Descargar Excel" wire:click="excelGenerate"
+                no-wire-navigate spinner class="text-white bg-orange-500 hover:bg-orange-600 transition-colors duration-200" />
             <x-mary-button wire:click.prevent="buscaResumen" label="Resumen Boletas" icon="o-arrow-path"
                 spinner responsive />
             <x-mary-button wire:click.prevent="enviarBloque" label="Enviar bloque" icon="o-arrow-path"

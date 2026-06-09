@@ -10,6 +10,7 @@ use GuzzleHttp\Client as GuzzleClient;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -46,6 +47,16 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        View::composer('app', function ($view): void {
+            try {
+                $faviconUrl = SiteConfig::default()->favicon_url;
+            } catch (\Throwable) {
+                $faviconUrl = null;
+            }
+
+            $view->with('faviconUrl', $faviconUrl);
+        });
     }
 
     /**

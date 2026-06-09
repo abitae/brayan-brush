@@ -8,7 +8,7 @@ use App\Models\Facturacion\Despatche;
 use App\Services\SunatServiceGlobal;
 use App\Services\SunatServiceGre;
 use App\Traits\LogCustom;
-use Carbon\Carbon;
+use App\Traits\UtilsTrait;
 use Greenter\Model\DocumentInterface;
 use Greenter\Report\XmlUtils;
 use Illuminate\Support\Facades\Auth;
@@ -23,6 +23,7 @@ class DespatcheLive extends Component
 {
     use LogCustom;
     use Toast;
+    use UtilsTrait;
     use WithPagination, WithoutUrlPagination;
     public string $title = 'GUIA DE REMICION TRANSPORTISTA';
     public string $sub_title = 'Modulo de facturacion';
@@ -43,9 +44,20 @@ class DespatcheLive extends Component
     public $num_despaches = 0;
     public function mount()
     {
-        $this->filtroFechaInicio = Carbon::now()->startOfDay()->format('Y-m-d H:i'); //$this->dateNow('Y-m-d');
-        $this->filtroFechaFin = Carbon::now()->endOfDay()->format('Y-m-d H:i:s'); //$this->dateNow('Y-m-d H:i:s');
+        $this->filtroFechaInicio = $this->filterDateStart();
+        $this->filtroFechaFin = $this->filterDateEnd();
     }
+
+    public function updatedFiltroFechaInicio(): void
+    {
+        $this->ensureDateRangeOrder($this->filtroFechaInicio, $this->filtroFechaFin);
+    }
+
+    public function updatedFiltroFechaFin(): void
+    {
+        $this->ensureDateRangeOrder($this->filtroFechaInicio, $this->filtroFechaFin);
+    }
+
     public function render()
     {
         $despaches = Despatche::query()
@@ -66,8 +78,8 @@ class DespatcheLive extends Component
             })
             ->when($this->filtroFechaInicio && $this->filtroFechaFin, function ($query) {
                 return $query->whereBetween('fechaEmision', [
-                    Carbon::parse($this->filtroFechaInicio)->startOfDay(),
-                    Carbon::parse($this->filtroFechaFin)->endOfDay()
+                    $this->parseFilterDateStart($this->filtroFechaInicio),
+                    $this->parseFilterDateEnd($this->filtroFechaFin),
                 ]);
             })
             ->latest('id');
@@ -183,8 +195,8 @@ class DespatcheLive extends Component
         $despaches = Despatche::whereNull('xml_path')
             ->when($this->filtroFechaInicio && $this->filtroFechaFin, function ($query) {
                 return $query->whereBetween('fechaEmision', [
-                    Carbon::parse($this->filtroFechaInicio)->startOfDay(),
-                    Carbon::parse($this->filtroFechaFin)->endOfDay()
+                    $this->parseFilterDateStart($this->filtroFechaInicio),
+                    $this->parseFilterDateEnd($this->filtroFechaFin),
                 ]);
             })->get();
 
@@ -198,8 +210,8 @@ class DespatcheLive extends Component
             ->whereNull('ticket')
             ->when($this->filtroFechaInicio && $this->filtroFechaFin, function ($query) {
                 return $query->whereBetween('fechaEmision', [
-                    Carbon::parse($this->filtroFechaInicio)->startOfDay(),
-                    Carbon::parse($this->filtroFechaFin)->endOfDay()
+                    $this->parseFilterDateStart($this->filtroFechaInicio),
+                    $this->parseFilterDateEnd($this->filtroFechaFin),
                 ]);
             })->get();
 
@@ -210,9 +222,9 @@ class DespatcheLive extends Component
         }
         $despaches = Despatche::whereNotNull('ticket')
             ->when($this->filtroFechaInicio && $this->filtroFechaFin, function ($query) {
-                return $query->whereBetween('created_at', [
-                    Carbon::parse($this->filtroFechaInicio)->startOfDay(),
-                    Carbon::parse($this->filtroFechaFin)->endOfDay()
+                return $query->whereBetween('fechaEmision', [
+                    $this->parseFilterDateStart($this->filtroFechaInicio),
+                    $this->parseFilterDateEnd($this->filtroFechaFin),
                 ]);
             })->get();
 

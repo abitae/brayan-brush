@@ -5,7 +5,7 @@
                 spinner class="text-white bg-orange-500 hover:bg-orange-600 transition-colors duration-200" />
         </x-slot:menu>
 
-        <div class="grid grid-cols-6 gap-2 p-2 shadow-xl">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 p-2 shadow-xl">
             <div>
                 <x-mary-input type='search' label="Buscar encomienda" icon="o-funnel" wire:model.live="search"
                     placeholder="Buscar encomienda" />
@@ -22,9 +22,13 @@
                 <x-mary-datetime label="Hasta" wire:model.live="filtroFechaFin" icon="o-calendar"
                     type="datetime-local" />
             </div>
-            <div class="col-span-2">
-                <x-mary-select label="Estado pago" icon="s-inbox-stack" :options="$estadosCredito"
-                    wire:model.live="FiltroEstadoCredito" />
+            <div>
+                <x-mary-select label="Estado crédito" icon="s-inbox-stack" :options="$estadosCredito"
+                    wire:model.live="FiltroEstadoCredito" placeholder="Todos" />
+            </div>
+            <div>
+                <x-mary-select label="Estado encomienda" icon="s-inbox-stack" :options="$estados"
+                    wire:model.live="FiltroEstadoEncomienda" placeholder="Todos" />
             </div>
 
         </div>
@@ -111,8 +115,12 @@
                         @endscope
                         @scope('cell_menu', $stuff)
                             <div class="flex items-center">
-                                <x-mary-button wire:click='modalCobrarOpen({{ $stuff->id }})' label="Cobrar"
-                                    class="bg-orange-500 hover:bg-orange-700 text-white" spinner />
+                                @if ($stuff->estado_credito === 'Pendiente')
+                                    <x-mary-button wire:click='modalCobrarOpen({{ $stuff->id }})' label="Cobrar"
+                                        class="bg-orange-500 hover:bg-orange-700 text-white" spinner />
+                                @else
+                                    <x-mary-badge value="Cobrado" class="bg-green-500 text-white" />
+                                @endif
                             </div>
                         @endscope
                     </x-mary-table>

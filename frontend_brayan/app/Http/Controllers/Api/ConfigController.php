@@ -4,12 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\SiteConfig;
+use App\Support\PageContent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+
 class ConfigController extends Controller
 {
-
     /**
      * Get site configuration (public).
      */
@@ -27,6 +28,7 @@ class ConfigController extends Controller
             'banner_url' => $config->banner_url,
             'banner_bg_url' => $config->banner_bg_url,
         ];
+
         $siteKey = config('services.recaptcha.site_key');
         if (! empty($siteKey)) {
             $payload['recaptcha_site_key'] = $siteKey;
@@ -41,12 +43,13 @@ class ConfigController extends Controller
     public function update(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'company_name' => 'required|string|max:255',
-            'logo_text' => 'required|string|max:255',
-            'hero_title' => 'required|string|max:255',
-            'hero_subtitle' => 'required|string|max:500',
-            'primary_color' => 'required|string|max:20',
+            'company_name' => 'sometimes|required|string|max:255',
+            'logo_text' => 'sometimes|required|string|max:255',
+            'hero_title' => 'sometimes|required|string|max:255',
+            'hero_subtitle' => 'sometimes|required|string|max:500',
+            'primary_color' => 'sometimes|required|string|max:20',
             'logo_url' => 'nullable|string',
+            'favicon_url' => 'nullable|string',
             'banner_url' => 'nullable|string',
             'banner_bg_url' => 'nullable|string',
             'tracking_api_url' => 'nullable|string|max:500',
@@ -70,24 +73,29 @@ class ConfigController extends Controller
             'openai_model' => 'nullable|string|max:64',
             'openai_system_instruction' => 'nullable|string|max:8000',
             'openai_enabled' => 'nullable|boolean',
+            'page_content' => 'nullable|array',
         ]);
 
         $config = SiteConfig::default();
 
-        if (isset($validated['gemini_api_key'])) {
+        if (array_key_exists('gemini_api_key', $validated)) {
             $validated['gemini_api_key'] = $validated['gemini_api_key'] ?: null;
         }
-        if (isset($validated['gemini_enabled'])) {
+        if (array_key_exists('gemini_enabled', $validated)) {
             $validated['gemini_enabled'] = (bool) $validated['gemini_enabled'];
         }
-        if (isset($validated['assistant_provider'])) {
+        if (array_key_exists('assistant_provider', $validated)) {
             $validated['assistant_provider'] = $validated['assistant_provider'] === 'chatgpt' ? 'chatgpt' : 'gemini';
         }
-        if (isset($validated['openai_api_key'])) {
+        if (array_key_exists('openai_api_key', $validated)) {
             $validated['openai_api_key'] = $validated['openai_api_key'] ?: null;
         }
-        if (isset($validated['openai_enabled'])) {
+        if (array_key_exists('openai_enabled', $validated)) {
             $validated['openai_enabled'] = (bool) $validated['openai_enabled'];
+        }
+
+        if (isset($validated['page_content'])) {
+            $validated['page_content'] = PageContent::sanitizeForSave($validated['page_content']);
         }
 
         $config->update($validated);
@@ -102,8 +110,19 @@ class ConfigController extends Controller
     {
         $url = $this->uploadFile($request, 'logo');
 
-        $config = SiteConfig::default();
-        $config->update(['logo_url' => $url]);
+        SiteConfig::default()->update(['logo_url' => $url]);
+
+        return response()->json(['url' => $url]);
+    }
+
+    /**
+     * Upload favicon and return public URL (auth required).
+     */
+    public function uploadFavicon(Request $request): JsonResponse
+    {
+        $url = $this->uploadFile($request, 'favicon', ['ico', 'png', 'jpg', 'jpeg', 'webp', 'svg'], 2048);
+
+        SiteConfig::default()->update(['favicon_url' => $url]);
 
         return response()->json(['url' => $url]);
     }
@@ -115,8 +134,7 @@ class ConfigController extends Controller
     {
         $url = $this->uploadFile($request, 'banner');
 
-        $config = SiteConfig::default();
-        $config->update(['banner_url' => $url]);
+        SiteConfig::default()->update(['banner_url' => $url]);
 
         return response()->json(['url' => $url]);
     }
@@ -128,24 +146,40 @@ class ConfigController extends Controller
     {
         $url = $this->uploadFile($request, 'banner_bg');
 
-        $config = SiteConfig::default();
-        $config->update(['banner_bg_url' => $url]);
+        SiteConfig::default()->update(['banner_bg_url' => $url]);
 
         return response()->json(['url' => $url]);
     }
 
-    private function uploadFile(Request $request, string $prefix): string
+    /**
+     * Upload "nosotros" section image and return public URL (auth required).
+     */
+    public function uploadAboutImage(Request $request): JsonResponse
+    {
+        $url = $this->uploadFile($request, 'about');
+
+        $config = SiteConfig::default();
+        $content = $config->resolvedPageContent();
+        $content['about']['image_url'] = $url;
+        $config->update(['page_content' => PageContent::sanitizeForSave($content)]);
+
+        return response()->json(['url' => $url]);
+    }
+
+    /**
+     * @param  list<string>  $mimes
+     */
+    private function uploadFile(Request $request, string $prefix, array $mimes = ['png', 'jpg', 'jpeg', 'webp'], int $maxKb = 10240): string
     {
         $request->validate([
-            'file' => 'required|file|mimes:png,jpg,jpeg,webp|max:10240',
+            'file' => 'required|file|mimes:'.implode(',', $mimes).'|max:'.$maxKb,
         ]);
 
         $file = $request->file('file');
         $ext = $file->getClientOriginalExtension();
         $name = $prefix.'_'.time().'.'.strtolower($ext);
-
         $path = $file->storeAs('uploads', $name, 'public');
 
-        return Storage::disk('public')->url($path);
+        return asset('storage/'.$path);
     }
 }

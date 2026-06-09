@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\BrayanBrush;
 
 use App\Http\Controllers\Controller;
+use App\Models\Agency;
 use App\Models\CalculatorCity;
+use App\Models\Complaint;
 use App\Models\PricingRoute;
 use App\Models\ProhibitedCategory;
 use App\Models\Quote;
@@ -38,8 +40,10 @@ class AdminController extends Controller
                 'hero_subtitle' => $config->hero_subtitle,
                 'primary_color' => $config->primary_color,
                 'logo_url' => $config->logo_url,
+                'favicon_url' => $config->favicon_url,
                 'banner_url' => $config->banner_url,
                 'banner_bg_url' => $config->banner_bg_url,
+                'page_content' => $config->resolvedPageContent(),
                 'tracking_api_url' => $config->tracking_api_url,
                 'calculator_default_mode' => $config->calculator_default_mode ?? 'weight',
                 'calculator_default_weight' => $config->calculator_default_weight !== null ? (int) $config->calculator_default_weight : 5,
@@ -75,6 +79,21 @@ class AdminController extends Controller
                 'volumetric_factor' => (int) $r->volumetric_factor,
             ])->values()->all(),
             'calculatorCities' => CalculatorCity::listForAdmin()->values()->all(),
+            'agencies' => Agency::listForAdmin()->values()->all(),
+            'complaints' => Complaint::orderByDesc('created_at')->get()->map(fn (Complaint $c) => [
+                'id' => $c->id,
+                'code' => $c->code,
+                'nombre' => $c->nombre,
+                'documento' => $c->documento,
+                'telefono' => $c->telefono,
+                'email' => $c->email,
+                'direccion' => $c->direccion,
+                'tipo' => $c->tipo,
+                'detalle' => $c->detalle,
+                'status' => $c->status,
+                'admin_notes' => $c->admin_notes,
+                'created_at' => $c->created_at->toIso8601String(),
+            ])->values()->all(),
         ]);
     }
 }

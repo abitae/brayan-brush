@@ -2,7 +2,9 @@ import { Head } from '@inertiajs/react';
 import BrayanBrushLayout from '@/layouts/brayan-brush-layout';
 import AdminDashboard from '@/components/brayan-brush/AdminDashboard';
 import type {
+  AgencyItem,
   CalculatorCityItem,
+  ComplaintItem,
   PricingRouteItem,
   ProhibitedCategoryAdmin,
   QuoteItem,
@@ -17,6 +19,8 @@ interface AdminProps {
   quotes: QuoteItem[];
   pricingRoutes: PricingRouteItem[];
   calculatorCities: CalculatorCityItem[];
+  agencies: AgencyItem[];
+  complaints: ComplaintItem[];
 }
 
 export default function Admin({
@@ -26,6 +30,8 @@ export default function Admin({
   quotes,
   pricingRoutes,
   calculatorCities,
+  agencies,
+  complaints,
 }: AdminProps) {
   return (
     <BrayanBrushLayout>
@@ -37,6 +43,8 @@ export default function Admin({
         quotes={quotes}
         pricingRoutes={pricingRoutes}
         calculatorCities={calculatorCities}
+        agencies={agencies}
+        complaints={complaints}
       />
     </BrayanBrushLayout>
   );
