@@ -74,8 +74,11 @@
             @endcan
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <x-mary-menu-item icon="o-arrow-right-on-rectangle" title="Cerrar sesión" link="{{ route('logout') }}"
-                    onclick="event.preventDefault(); this.closest('form').submit();" />
+                <button type="submit"
+                    class="flex w-full items-center gap-3 px-4 py-2.5 text-sm hover:bg-base-200 rounded-lg transition-colors cursor-pointer">
+                    <x-mary-icon name="o-arrow-right-on-rectangle" class="w-5 h-5 shrink-0 opacity-70" />
+                    <span>Cerrar sesión</span>
+                </button>
             </form>
         </x-mary-dropdown>
     </x-slot:actions>
